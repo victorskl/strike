@@ -34,7 +34,7 @@ public class StrikeServer {
     private String serverId = "s1";
 
     @Option(name = "-l", usage = "l=Server Configuration File")
-    private String serverConfig = "./server.tab";
+    private String serverConfig = "strike-server/server.tab";
 
     @Option(name = "-d", usage = "d=Debug")
     private boolean debug = false;
@@ -54,7 +54,6 @@ public class StrikeServer {
             cmdLineParser.parseArgument(args);
 
             logger.info("option: -n " + serverId);
-            logger.info("option: -l " + serverConfig);
             logger.info("option: -l " + serverConfig);
             logger.info("option: -d " + debug);
 
@@ -96,6 +95,7 @@ public class StrikeServer {
         try {
             serverState.setServerInfoList(csvToBean.parse(strategy, new CSVReader(new FileReader(serverConfig), '\t')));
         } catch (FileNotFoundException e) {
+            logger.error("Can not load config file from location: " + serverConfig);
             logger.trace(e.getMessage());
         }
     }
