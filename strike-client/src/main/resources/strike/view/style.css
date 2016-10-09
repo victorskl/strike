@@ -1,3 +1,35 @@
 .root {
-    -fx-background-color: cornsilk;
+    -fx-background-color: #eeeeee;
+}
+
+
+.labels {
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.input {
+    -fx-background-color: white;
+}
+
+.usernameInput {
+    -fx-border-radius: 0;
+}
+
+.radio, .radio-button {
+  -fx-mark-highlight-color: #4082b9 ;
+  -fx-mark-color: #4082b9 ;
+  -fx-background-insets: 0;
+  
+}
+
+.radio {
+    -fx-background-color: white;
+}
+
+.loginbutton {
+    -fx-font-wight: bold;
+    -fx-text-fill: white;
+
+    -fx-background-color: rgb(66, 160, 207);
 }
