@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.TextFlow?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="strike.controller.ChatWindowController">
    <children>
-      <TextField fx:id="idMessageTextField" layoutX="116.0" layoutY="359.0" onAction="#didSendMessage" prefHeight="51.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
-      <TextArea fx:id="idChatWindowContents" layoutX="14.0" layoutY="14.0" prefHeight="200.0" prefWidth="200.0" promptText="Welcome to the chat room!" text="Welcome to the chat room!" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+      <TextField fx:id="idMessageTextField" layoutX="116.0" layoutY="359.0" onAction="#didSendMessage" prefHeight="51.0" prefWidth="600.0" style="-fx-border-radius: 0;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+      <ScrollPane fx:id="idClientsScrollPane" layoutY="38.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="51.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <content>
+            <TextFlow fx:id="idClientsContents" prefHeight="330.0" prefWidth="200.0" />
+         </content>
+      </ScrollPane>
+      <ScrollPane fx:id="idScrollPane" fitToWidth="true" vvalue="1.0" AnchorPane.bottomAnchor="51.0" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <TextFlow fx:id="idChatWindowContents" layoutX="14.0" layoutY="14.0" prefHeight="313.0" prefWidth="567.0" AnchorPane.bottomAnchor="51.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+      </ScrollPane>
    </children>
 </AnchorPane>

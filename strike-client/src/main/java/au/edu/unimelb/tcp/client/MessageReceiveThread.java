@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.HashSet;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -16,6 +17,7 @@ public class MessageReceiveThread implements Runnable {
 	private Socket socket;
 	private State state;
 	private boolean debug;
+	private Client client;
 
 	private BufferedReader in;
 
@@ -25,10 +27,11 @@ public class MessageReceiveThread implements Runnable {
 	
 	private MessageSendThread messageSendThread;
 
-	public MessageReceiveThread(Socket socket, State state, MessageSendThread messageSendThread, boolean debug) throws IOException {
+	public MessageReceiveThread(Socket socket, State state, MessageSendThread messageSendThread, Client client, boolean debug) throws IOException {
 		this.socket = socket;
 		this.state = state;
 		this.messageSendThread = messageSendThread;
+		this.client = client;
 		this.debug = debug;
 	}
 
@@ -95,36 +98,73 @@ public class MessageReceiveThread implements Runnable {
 
 			// identify whether the user has quit!
 			if (message.get("roomid").equals("")) {
+
 				// quit initiated by the current client
 				if (message.get("identity").equals(state.getIdentity())) {
+					String userid = (String) message.get("identity");
 					System.out.println(message.get("identity") + " has quit!");
+					this.client.userDidLeave(userid);
 					in.close();
 					System.exit(1);
 				} else {
+					String userid = (String) message.get("identity");
+					this.client.userDidLeave(userid);
 					System.out.println(message.get("identity") + " has quit!");
 					System.out.print("[" + state.getRoomId() + "] " + state.getIdentity() + "> ");
 				}
-			// identify whether the client is new or not
+
+				// identify whether the client is new or not
 			} else if (message.get("former").equals("")) {
+
 				// change state if it's the current client
 				if (message.get("identity").equals(state.getIdentity())) {
-					state.setRoomId((String) message.get("roomid"));
+					String from = state.getRoomId();
+					String to = (String) message.get("roomid");
+
+					this.client.didChangeRoom(from, to);
+					state.setRoomId(to);
 				}
+				else {
+					String userid = (String) message.get("identity");
+					this.client.userDidJoin(userid);
+				}
+
 				System.out.println(message.get("identity") + " moves to "
 						+ (String) message.get("roomid"));
 				System.out.print("[" + state.getRoomId() + "] " + state.getIdentity() + "> ");
-			// identify whether roomchange actually happens
+
+				// identify whether roomchange actually happens
 			} else if (message.get("former").equals(message.get("roomid"))) {
 				System.out.println("room unchanged");
 				System.out.print("[" + state.getRoomId() + "] " + state.getIdentity() + "> ");
 			}
+
 			// print the normal roomchange message
 			else {
+
 				// change state if it's the current client
 				if (message.get("identity").equals(state.getIdentity())) {
-					state.setRoomId((String) message.get("roomid"));
+
+					String from = state.getRoomId();
+					String to = (String) message.get("roomid");
+
+					this.client.didChangeRoom(from, to);
+					state.setRoomId(to);
 				}
-				
+				else {
+					String from = (String) message.get("former");
+					String to = (String) message.get("roomid");
+					String userid = (String) message.get("identity");
+
+					// The user is leaving.
+					if(from.equalsIgnoreCase(state.getRoomId())) {
+						this.client.userDidLeave(userid);
+					}
+					else {
+						this.client.userDidJoin(userid);
+					}
+				}
+
 				System.out.println(message.get("identity") + " moves from " + message.get("former") + " to "
 						+ message.get("roomid"));
 				System.out.print("[" + state.getRoomId() + "] " + state.getIdentity() + "> ");
@@ -134,14 +174,23 @@ public class MessageReceiveThread implements Runnable {
 		
 		// server reply of #who
 		if (type.equals("roomcontents")) {
+
+			HashSet<String> clients = new HashSet<>();
+
 			JSONArray array = (JSONArray) message.get("identities");
 			System.out.print(message.get("roomid") + " contains");
 			for (int i = 0; i < array.size(); i++) {
+
 				System.out.print(" " + array.get(i));
-				if (message.get("owner").equals(array.get(i))) {
+
+				clients.add((String)array.get(i));
+
+					if (message.get("owner").equals(array.get(i))) {
 					System.out.print("*");
 				}
 			}
+
+			this.client.didReceiveInitialClientList(clients);
 			System.out.println();
 			System.out.print("[" + state.getRoomId() + "] " + state.getIdentity() + "> ");
 			return;
@@ -149,9 +198,13 @@ public class MessageReceiveThread implements Runnable {
 		
 		// server forwards message
 		if (type.equals("message")) {
-			System.out.println(message.get("identity") + ": "
-					+ message.get("content"));
+			String identity = (String)message.get("identity");
+			String content = (String)message.get("content");
+
+			System.out.println(identity + ": "
+					+ content);
 			System.out.print("[" + state.getRoomId() + "] " + state.getIdentity() + "> ");
+			this.client.didReceiveMessage(identity, content);
 			return;
 		}
 		

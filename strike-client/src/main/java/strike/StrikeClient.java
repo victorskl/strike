@@ -1,5 +1,6 @@
 package strike;
 
+import au.edu.unimelb.tcp.client.Client;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -14,9 +15,11 @@ public class StrikeClient extends Application {
 
     private Stage primaryStage;
     private BorderPane rootLayout;
+    private Client client;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle("Strike Chat Client");
 
@@ -26,6 +29,8 @@ public class StrikeClient extends Application {
         if (!userNotLoggedIn) {
             showLogin();
         }
+
+        client = new Client(getParameters().getRaw().toArray(new String[0]));
     }
 
     private void initRootLayout() {
@@ -64,6 +69,7 @@ public class StrikeClient extends Application {
     public Stage getPrimaryStage() {
         return primaryStage;
     }
+    public Client getClient() {return client;}
 
     public static void main(String[] args) {
         launch(args);

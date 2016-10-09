@@ -124,4 +124,8 @@ public class MessageSendThread implements Runnable {
 		}
 		socket = temp_socket;
 	}
+
+	public Socket getSocket() {
+		return socket;
+	}
 }

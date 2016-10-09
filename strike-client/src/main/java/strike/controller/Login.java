@@ -72,6 +72,14 @@ public class Login {
             ChatWindowController controller = loader.getController();
             controller.setStrikeClient(this.strikeClient);
 
+            // Super temporary.
+            try {
+                this.strikeClient.getClient().run();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
