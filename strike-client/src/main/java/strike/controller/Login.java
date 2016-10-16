@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Pane;
 import strike.StrikeClient;
 
 import java.io.IOException;
@@ -59,26 +60,19 @@ public class Login {
         // Just show the chat window for now.
         try {
 
+            // Get the screenname.
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(this.strikeClient.getClass().getResource("view/ChatWindow.fxml"));
-            AnchorPane chatWindow = loader.load();
+            loader.setLocation(this.strikeClient.getClass().getResource("view/ScreenName.fxml"));
+            Pane screenNameWindow = loader.load();
 
             // Show the scene containing the root layout.
-            Scene scene = new Scene(chatWindow);
+            Scene scene = new Scene(screenNameWindow);
             strikeClient.getPrimaryStage().setScene(scene);
             strikeClient.getPrimaryStage().show();
 
-            // Give the chat window controller any details it needs.
-            ChatWindowController controller = loader.getController();
+            // Pass the client to the screen name widnow.
+            ScreenNameController controller = loader.getController();
             controller.setStrikeClient(this.strikeClient);
-
-            // Super temporary.
-            try {
-                this.strikeClient.getClient().run();
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
 
         } catch (IOException e) {
             e.printStackTrace();

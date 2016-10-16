@@ -4,8 +4,11 @@ import au.edu.unimelb.tcp.client.Client;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import strike.StrikeClient;
@@ -61,6 +64,9 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
             idScrollPane.setVvalue(newVal.doubleValue());
         });
 
+        idChatWindowContents.setPadding(new Insets(10, 10, 10, 10));
+        idClientsContents.setPadding(new Insets(15, 15, 15, 15));
+
         /*
         idClientsContents.heightProperty().addListener((observable, oldVal, newVal) -> {
             idClientsScrollPane.setVvalue(newVal.doubleValue());
@@ -111,9 +117,24 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
 
         idClientsContents.getChildren().removeAll(idClientsContents.getChildren());
 
+        Text titleText = new Text("USERS\n");
+        titleText.setStyle("-fx-font-weight: bold");
+
+        titleText.setFill(Color.web("#555555"));
+        titleText.setFont(Font.font("Helvetica", FontWeight.BOLD, 14));
+
+        idClientsContents.getChildren().add(titleText);
+
         for(String client : clients) {
+
+            Text onlineSymbol = new Text("● ");
+            onlineSymbol.setFill(Color.rgb(103,207,96));
+            onlineSymbol.setFont(Font.font("Helvetica", FontWeight.SEMI_BOLD, 16));
+            idClientsContents.getChildren().add(onlineSymbol);
+
             Text text = new Text(String.format("%s\n", client));
-            text.setStyle("-fx-font-weight: bold");
+            text.setFill(Color.web("#666666"));
+            text.setFont(Font.font("Helvetica", FontWeight.SEMI_BOLD, 14));
             idClientsContents.getChildren().add(text);
         }
     }

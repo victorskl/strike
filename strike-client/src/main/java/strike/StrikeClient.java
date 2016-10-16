@@ -30,7 +30,16 @@ public class StrikeClient extends Application {
             showLogin();
         }
 
-        client = new Client(getParameters().getRaw().toArray(new String[0]));
+        String[] args = new String[6];
+        args[0] = "-p";
+        args[1] = "4444";
+        args[2] = "-i";
+        args[3] = "user";
+        args[4] = "-h";
+        args[5] = "localhost";
+
+        //client = new Client(getParameters().getRaw().toArray(new String[0]));
+        client = new Client(args);
     }
 
     private void initRootLayout() {
@@ -73,5 +82,14 @@ public class StrikeClient extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+
+        if(client.isRunning()) {
+            client.SendMessage("#quit");
+        }
     }
 }

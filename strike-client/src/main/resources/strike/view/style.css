@@ -12,6 +12,11 @@
     -fx-background-color: white;
 }
 
+.messageInput {
+    -fx-background-color: white;
+    -fx-border-color: white;
+}
+
 .usernameInput {
     -fx-border-radius: 0;
 }
@@ -28,8 +33,28 @@
 }
 
 .loginbutton {
-    -fx-font-wight: bold;
     -fx-text-fill: white;
 
     -fx-background-color: rgb(66, 160, 207);
+}
+
+.sendbutton {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+
+    -fx-background-color: rgb(66, 160, 207);
+    -fx-border-color: rgb(66, 160, 207);
+}
+
+.userlist {
+    -fx-background-color: #eeeeee;
+    -fx-background: #eeeeee;
+}
+
+.chatwindow {
+    -fx-background-color: #eeeeee;
+}
+
+.serverlist {
+    -fx-background-color: #ffffff;
 }

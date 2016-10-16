@@ -18,14 +18,20 @@ public class Client {
 
 	MessageSendThread messageSendThread;
 
+	String identity = null;
+
+	private boolean hasStarted = false;
+
 	public Client(String[] args) {
 		this.args = args;
 	}
 
 	public void run() throws IOException, ParseException {
 		Socket socket = null;
-		String identity = null;
+
 		boolean debug = false;
+		hasStarted = true;
+
 		try {
 			//load command line args
 			ComLineValues values = new ComLineValues();
@@ -33,7 +39,7 @@ public class Client {
 			try {
 				parser.parseArgument(args);
 				String hostname = values.getHost();
-				identity = values.getIdeneity();
+				//identity = values.getIdeneity(); Have to set it now on the client before running.
 				int port = values.getPort();
 				debug = values.isDebug();
 				socket = new Socket(hostname, port);
@@ -73,6 +79,14 @@ public class Client {
 
 	public void requestClientListUpdate() {
 		SendMessage("#who");
+	}
+
+	public boolean isRunning() {
+		return this.hasStarted;
+	}
+
+	public void setIdentity(String identity) {
+		this.identity = identity;
 	}
 
 	// Events which we can hook into for the GUI.
