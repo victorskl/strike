@@ -19,6 +19,11 @@ public class ProtocolHandlerFactory {
             return new NewIdentityProtocolHandler(jsonMessage, connection);
         }
 
+        // Added 16/20/16 by Ray
+        if (type.equalsIgnoreCase(Protocol.listserver.toString())){
+            return new ListServerProtocolHandler(jsonMessage,connection);
+        }
+
         if (type.equalsIgnoreCase(Protocol.list.toString())) {
             return new ListProtocolHandler(jsonMessage, connection);
         }
