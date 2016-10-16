@@ -9,6 +9,7 @@ import strike.model.Message;
 import strike.model.Protocol;
 import strike.model.UserInfo;
 
+import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
@@ -23,12 +24,12 @@ public class ClientConnection implements Runnable {
     private ExecutorService pool;
     private JSONParser parser;
 
-    private Socket clientSocket;
+    private SSLSocket clientSocket;
     private BlockingQueue<Message> messageQueue;
     private UserInfo userInfo;
     private boolean routed = false;
 
-    public ClientConnection(Socket clientSocket) {
+    public ClientConnection(SSLSocket clientSocket) {
         try {
             this.clientSocket = clientSocket;
             this.reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8"));

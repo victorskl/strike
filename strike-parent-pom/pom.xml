@@ -18,6 +18,11 @@
         <slf4j.version>1.7.21</slf4j.version>
         <args4j.version>2.33</args4j.version>
         <json.simple.version>1.1.1</json.simple.version>
+        <opencsv.version>3.8</opencsv.version>
+        <guava.version>19.0</guava.version>
+        <bounty.version>1.55</bounty.version>
+        <commons.lang3.version>3.4</commons.lang3.version>
+        <commons.config.version>2.0</commons.config.version>
     </properties>
 
     <dependencyManagement>
@@ -89,6 +94,33 @@
             <groupId>com.googlecode.json-simple</groupId>
             <artifactId>json-simple</artifactId>
             <version>${json.simple.version}</version>
+        </dependency>
+
+        <!-- OpenCSV -->
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>${opencsv.version}</version>
+        </dependency>
+
+        <!-- Apache Common -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons.lang3.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-configuration2</artifactId>
+            <version>${commons.config.version}</version>
+        </dependency>
+
+        <!-- Guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
 
     </dependencies>

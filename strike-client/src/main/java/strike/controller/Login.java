@@ -6,6 +6,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import strike.StrikeClient;
 
 import java.io.IOException;
@@ -33,7 +35,7 @@ public class Login {
          * Initializes the controller class. This method is automatically called
          * after the fxml file has been loaded.
          */
-        System.out.println("Login Controller Init...");
+        logger.info("Login Controller Init...");
     }
 
     @FXML
@@ -84,4 +86,6 @@ public class Login {
             e.printStackTrace();
         }
     }
+
+    private static final Logger logger = LogManager.getLogger(Login.class);
 }

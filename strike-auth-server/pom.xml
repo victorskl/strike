@@ -1,22 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>strike</groupId>
         <artifactId>strike-parent-pom</artifactId>
+        <groupId>strike</groupId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../strike-parent-pom/pom.xml</relativePath>
     </parent>
 
-    <artifactId>strike-server</artifactId>
+    <artifactId>strike-auth-server</artifactId>
     <packaging>jar</packaging>
 
-    <description>Server Module</description>
-
     <properties>
+        <shiro.version>1.3.2</shiro.version>
     </properties>
 
     <dependencies>
@@ -25,6 +22,12 @@
             <groupId>strike</groupId>
             <artifactId>strike-common</artifactId>
             <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-core</artifactId>
+            <version>${shiro.version}</version>
         </dependency>
 
     </dependencies>
@@ -42,7 +45,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>strike.App</mainClass>
+                            <mainClass>strike.StrikeAuthServer</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -73,7 +76,7 @@
                                     <directory>${basedir}</directory>
                                     <filtering>true</filtering>
                                     <includes>
-                                        <include>server.tab</include>
+                                        <include>auth-server.conf</include>
                                     </includes>
                                 </resource>
                             </resources>
@@ -84,5 +87,4 @@
 
         </plugins>
     </build>
-
 </project>

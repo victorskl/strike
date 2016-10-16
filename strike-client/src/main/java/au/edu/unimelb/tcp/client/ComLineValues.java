@@ -1,8 +1,13 @@
 package au.edu.unimelb.tcp.client;
 import org.kohsuke.args4j.Option;
 
+import java.io.File;
 
 public class ComLineValues {
+
+	@Option(name = "-c", usage = "c=System Properties file")
+	private File systemPropertiesFile = new File("./config/system.properties");
+
 	@Option(required=true, name = "-h", aliases="--host", usage="Server host address")
 	private String host;
 	
@@ -30,4 +35,8 @@ public class ComLineValues {
 	public boolean isDebug() {
 		return debug;
 	}
+
+    public File getSystemPropertiesFile() {
+        return systemPropertiesFile;
+    }
 }

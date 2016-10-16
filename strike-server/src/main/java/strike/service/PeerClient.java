@@ -8,30 +8,68 @@ import org.json.simple.parser.ParseException;
 import strike.model.Protocol;
 import strike.model.ServerInfo;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
-import java.net.Socket;
 
 public class PeerClient {
 
     private ServerState serverState = ServerState.getInstance();
     private ServerInfo serverInfo = serverState.getServerInfo();
     private JSONParser parser;
+    private SSLSocketFactory sslsocketfactory;
 
     public PeerClient() {
         parser = new JSONParser();
+        sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
     }
 
     public String commPeer(ServerInfo server, String message) {
 
-        Socket socket = null;
+        SSLSocket socket = null;
         try {
-            socket = new Socket(server.getAddress(), server.getManagementPort());
+            socket = (SSLSocket) sslsocketfactory.createSocket(server.getAddress(), server.getManagementPort());
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
             writer.write(message + "\n");
             writer.flush();
 
             logger.debug("[S2S]Sending  : [" + server.getServerId()
                     + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + message);
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+            return reader.readLine();
+
+        } catch (IOException ioe) {
+            //ioe.printStackTrace();
+            logger.trace("Can't Connect: " + server.getServerId() + "@"
+                    + server.getAddress() + ":" + server.getManagementPort());
+        } finally {
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public String commPeer(ServerInfo server, String... messages) {
+
+        if (messages.length < 1) return null;
+
+        SSLSocket socket = null;
+        try {
+            socket = (SSLSocket) sslsocketfactory.createSocket(server.getAddress(), server.getManagementPort());
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+            for (String message : messages) {
+                writer.write(message + "\n");
+                writer.flush();
+                logger.debug("[S2S]Sending  : [" + server.getServerId()
+                        + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + message);
+            }
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
             return reader.readLine();
@@ -95,9 +133,9 @@ public class PeerClient {
 
     public String commServerSingleResp(ServerInfo server, String message) {
 
-        Socket socket = null;
+        SSLSocket socket = null;
         try {
-            socket = new Socket(server.getAddress(), server.getPort());
+            socket = (SSLSocket) sslsocketfactory.createSocket(server.getAddress(), server.getPort());
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
             writer.write(message + "\n");
             writer.flush();

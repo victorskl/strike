@@ -3,11 +3,13 @@ package strike;
 import com.opencsv.CSVReader;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -22,6 +24,7 @@ import strike.model.RemoteChatRoomInfo;
 import strike.model.ServerInfo;
 import strike.service.*;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -34,7 +37,10 @@ public class StrikeServer {
     private String serverId = "s1";
 
     @Option(name = "-l", usage = "l=Server Configuration File")
-    private String serverConfig = "strike-server/server.tab";
+    private String serverConfig = "./config/server.tab";
+
+    @Option(name = "-c", usage = "c=System Properties file")
+    private File systemPropertiesFile = new File("./config/system.properties");
 
     @Option(name = "-d", usage = "d=Debug")
     private boolean debug = false;
@@ -46,6 +52,8 @@ public class StrikeServer {
     private ServerInfo serverInfo;
     private ExecutorService servicePool;
     private String mainHall;
+
+    private Configuration systemProperties;
 
     public StrikeServer(String[] args) {
         try {
@@ -59,6 +67,20 @@ public class StrikeServer {
 
             logger.info("Reading server config");
             readServerConfiguration();
+
+            logger.info("option: -c " + systemPropertiesFile.toString());
+            logger.info("Reading system properties file: " + systemPropertiesFile.toString());
+            try {
+                Configurations configs = new Configurations();
+                systemProperties = configs.properties(systemPropertiesFile);
+            } catch (ConfigurationException e) {
+                e.printStackTrace();
+            }
+            logger.info("Setting up SSL system environment...");
+            System.setProperty("javax.net.ssl.keyStore", systemProperties.getString("keystore"));
+            System.setProperty("javax.net.ssl.keyStorePassword","strikepass");
+            System.setProperty("javax.net.ssl.trustStore", systemProperties.getString("keystore")); // needed for PeerClient
+            //System.setProperty("javax.net.debug","all"); // uncomment to debug SSL, and comment it back there after
 
             logger.info("Init server state");
             serverState.initServerState(serverId);
@@ -102,7 +124,7 @@ public class StrikeServer {
 
     private void updateLogger() {
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        Configuration config = ctx.getConfiguration();
+        org.apache.logging.log4j.core.config.Configuration config = ctx.getConfiguration();
         LoggerConfig loggerConfig = config.getLoggerConfig("strike");
 
         if (debug && !trace) {
@@ -155,8 +177,10 @@ public class StrikeServer {
 
             if (serverState.isOnline(server)) {
                 // promote my main hall
-                peerClient.commPeer(server, messageBuilder.lockRoom(this.mainHall));
-                peerClient.commPeer(server, messageBuilder.releaseRoom(this.mainHall, "true"));
+                //peerClient.commPeer(server, messageBuilder.lockRoom(this.mainHall));
+                //peerClient.commPeer(server, messageBuilder.releaseRoom(this.mainHall, "true"));
+                String[] messages = {messageBuilder.lockRoom(this.mainHall), messageBuilder.releaseRoom(this.mainHall, "true")};
+                peerClient.commPeer(server, messages);
 
                 // accept theirs
                 String resp = peerClient.commServerSingleResp(server, messageBuilder.listRoomsClient());
