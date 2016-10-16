@@ -10,7 +10,7 @@ import strike.service.JSONMessageBuilder;
 import strike.service.PeerClient;
 import strike.service.ServerState;
 
-import java.net.Socket;
+import javax.net.ssl.SSLSocket;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
@@ -26,7 +26,7 @@ public class CommonHandler {
     protected ClientConnection clientConnection;
     protected BlockingQueue<Message> messageQueue;
     protected UserInfo userInfo;
-    protected Socket clientSocket;
+    protected SSLSocket clientSocket;
 
     public CommonHandler(JSONObject jsonMessage, Runnable connection) {
         this.jsonMessage = jsonMessage;

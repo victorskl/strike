@@ -11,7 +11,6 @@ import strike.model.UserInfo;
 
 import javax.net.ssl.SSLSocket;
 import java.io.*;
-import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -108,7 +107,7 @@ public class ClientConnection implements Runnable {
         return messageQueue;
     }
 
-    public Socket getClientSocket() {
+    public SSLSocket getClientSocket() {
         return clientSocket;
     }
 

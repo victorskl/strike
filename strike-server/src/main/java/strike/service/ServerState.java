@@ -6,9 +6,10 @@ import strike.model.RemoteChatRoomInfo;
 import strike.model.ServerInfo;
 import strike.model.UserInfo;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -156,7 +157,8 @@ public class ServerState {
         try {
             InetSocketAddress address = new InetSocketAddress(serverInfo.getAddress(), serverInfo.getManagementPort());
             final int timeOut = (int) TimeUnit.SECONDS.toMillis(5);
-            final Socket shortKet = new Socket();
+            SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            final SSLSocket shortKet = (SSLSocket) sslsocketfactory.createSocket();
             shortKet.connect(address, timeOut);
             shortKet.close();
         } catch (IOException e) {
