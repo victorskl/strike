@@ -11,6 +11,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.config.IniSecurityManagerFactory;
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.util.Factory;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -81,6 +85,8 @@ public class StrikeServer {
             System.setProperty("javax.net.ssl.keyStorePassword","strikepass");
             System.setProperty("javax.net.ssl.trustStore", systemProperties.getString("keystore")); // needed for PeerClient
             //System.setProperty("javax.net.debug","all"); // uncomment to debug SSL, and comment it back there after
+
+            setupShiro();
 
             logger.info("Init server state");
             serverState.initServerState(serverId);
@@ -211,6 +217,12 @@ public class StrikeServer {
                 }
             }
         }
+    }
+
+    private void setupShiro() {
+        Factory<SecurityManager> factory = new IniSecurityManagerFactory(systemProperties.getString("shiro.ini"));
+        SecurityManager securityManager = factory.getInstance();
+        SecurityUtils.setSecurityManager(securityManager);
     }
 
     private static final int SERVER_SOCKET_POOL = 2;

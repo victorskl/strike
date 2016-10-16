@@ -20,7 +20,6 @@
         <module>strike-common</module>
         <module>strike-server</module>
         <module>strike-client</module>
-        <module>strike-auth-server</module>
     </modules>
 
     <build>

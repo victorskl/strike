@@ -188,4 +188,15 @@ public class JSONMessageBuilder {
         jj.put(Protocol.type.toString(), Protocol.list.toString());
         return jj.toJSONString();
     }
+
+    // Authentication Protocols
+
+    public String authResponse(String success, String reason) {
+        //{"type":"authresponse", "success":"false", "reason":"null"}
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.authresponse.toString());
+        jj.put(Protocol.success.toString(), success);
+        jj.put(Protocol.reason.toString(), reason);
+        return jj.toJSONString();
+    }
 }

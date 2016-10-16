@@ -1,5 +1,6 @@
 package strike.handler.client;
 
+import org.apache.shiro.subject.Subject;
 import org.json.simple.JSONObject;
 import strike.handler.IProtocolHandler;
 
@@ -25,5 +26,7 @@ public class QuitProtocolHandler extends CommonHandler implements IProtocolHandl
         }
 
         write(messageBuilder.roomChange(former, "", userInfo.getIdentity()));
+
+        clientConnection.getCurrentUser().logout();
     }
 }

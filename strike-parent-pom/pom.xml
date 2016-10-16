@@ -23,6 +23,7 @@
         <bounty.version>1.55</bounty.version>
         <commons.lang3.version>3.4</commons.lang3.version>
         <commons.config.version>2.0</commons.config.version>
+        <commons.beanutils.version>1.9.3</commons.beanutils.version>
     </properties>
 
     <dependencyManagement>
@@ -114,6 +115,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-configuration2</artifactId>
             <version>${commons.config.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>${commons.beanutils.version}</version>
         </dependency>
 
         <!-- Guava -->

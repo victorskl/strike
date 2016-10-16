@@ -22,7 +22,7 @@ public class StrikeServerTest {
         System.out.println("After Test");
     }
 
-    @Test
+    @Test @Ignore
     public void testHello() {
         assertEquals(sc.hello(), "Hello");
     }

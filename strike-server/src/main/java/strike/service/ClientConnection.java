@@ -2,8 +2,11 @@ package strike.service;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import strike.handler.ProtocolHandlerFactory;
 import strike.model.Message;
 import strike.model.Protocol;
@@ -28,6 +31,8 @@ public class ClientConnection implements Runnable {
     private UserInfo userInfo;
     private boolean routed = false;
 
+    private Subject currentUser;
+
     public ClientConnection(SSLSocket clientSocket) {
         try {
             this.clientSocket = clientSocket;
@@ -36,6 +41,8 @@ public class ClientConnection implements Runnable {
             this.messageQueue = new LinkedBlockingQueue<>();
             this.parser = new JSONParser();
             this.pool = Executors.newSingleThreadExecutor();
+
+            currentUser = SecurityUtils.getSubject(); // bind it to this connection thread context
         } catch (Exception e) {
             logger.trace(e.getMessage());
         }
@@ -88,6 +95,11 @@ public class ClientConnection implements Runnable {
         } catch (Exception e) {
             logger.trace(e.getMessage());
             pool.shutdownNow();
+        } finally {
+            if (currentUser != null) {
+                logger.info("Client disconnected: " + currentUser.getPrincipal());
+                currentUser.logout();
+            }
         }
     }
 
@@ -125,6 +137,10 @@ public class ClientConnection implements Runnable {
 
     public void setRouted(boolean routed) {
         this.routed = routed;
+    }
+
+    public Subject getCurrentUser() {
+        return currentUser;
     }
 
     private static final Logger logger = LogManager.getLogger(ClientConnection.class);
