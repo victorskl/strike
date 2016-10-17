@@ -126,6 +126,37 @@ public class JSONMessageBuilder {
         return jj.toJSONString();
     }
 
+    public String listServers(){
+/*
+        {
+            "type":"serverlist", "servers": [
+                                                {“serverid”:s1, “address”:”192.168.0.3”, ”port”:”4444”}
+                                                {“serverid”:s2, “address”:”192.168.0.2”, ”port”:”4445”}
+                                                {“serverid”:s3, “address”:”192.168.0.1”, ”port”:”4444”}
+					                        ]
+        }
+*/
+
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.serverlist.toString());
+
+        JSONArray ja = new JSONArray();
+
+        for (ServerInfo server : serverState.getServerInfoList()){
+            if (serverState.isOnline(server)) {
+                JSONObject jo = new JSONObject();
+                jo.put(Protocol.serverid.toString(), server.getServerId());
+                jo.put(Protocol.address.toString(), server.getAddress());
+                jo.put(Protocol.port.toString(), server.getPort());
+                ja.add(jo);
+            }
+        }
+
+        jj.put(Protocol.servers.toString(), ja);
+
+        return jj.toJSONString();
+    }
+
     public String releaseIdentity(String userId) {
         //{"type" : "releaseidentity", "serverid" : "s1", "identity" : "Adel"}
         JSONObject jj = new JSONObject();

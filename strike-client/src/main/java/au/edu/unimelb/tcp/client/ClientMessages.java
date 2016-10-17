@@ -18,7 +18,7 @@ public class ClientMessages {
 		list.put("type", "list");
 		return list;		
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static JSONObject getWhoRequest() {
 		JSONObject who = new JSONObject();
@@ -74,4 +74,6 @@ public class ClientMessages {
 		movejoin.put("roomid", roomid);
 		return movejoin;
 	}
+
+
 }
