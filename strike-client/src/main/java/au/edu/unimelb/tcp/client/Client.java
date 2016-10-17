@@ -16,10 +16,14 @@ public class Client {
 
 	MessageSendThread messageSendThread;
 
-    /**
-     * @deprecated use Client(ComLineValues values) constructor instead
-     */
-    @Deprecated
+	String identity = null;
+	private boolean hasStarted = false;
+	boolean debug = false;
+
+	/**
+	 * @deprecated use Client(ComLineValues values) constructor instead
+	 */
+	@Deprecated
 	public Client(String[] args) {
 		//this.args = args;
         throw new UnsupportedOperationException("move to: new Client(ComLineValues values)");
@@ -30,9 +34,10 @@ public class Client {
     }
 
 	public void run() throws IOException, ParseException {
+
 		SSLSocket socket = null;
-		String identity = null;
-		boolean debug = false;
+
+
 		try {
 			//load command line args
 			//ComLineValues values = new ComLineValues();
@@ -63,7 +68,6 @@ public class Client {
 		}
 	}
 
-
 	// Can use this to send messages from the GUI client.
 	public void SendMessage(String message) {
 		try {
@@ -77,6 +81,14 @@ public class Client {
 
 	public void requestClientListUpdate() {
 		SendMessage("#who");
+	}
+
+	public boolean isRunning() {
+		return this.hasStarted;
+	}
+
+	public void setIdentity(String identity) {
+		this.identity = identity;
 	}
 
 	// Events which we can hook into for the GUI.

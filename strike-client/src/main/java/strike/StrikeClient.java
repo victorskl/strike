@@ -14,10 +14,8 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
 import strike.controller.Login;
 
-import java.io.File;
 import java.io.IOException;
 
 public class StrikeClient extends Application {
@@ -28,12 +26,24 @@ public class StrikeClient extends Application {
 
     private Configuration systemProperties;
 
+    private static final Logger logger = LogManager.getLogger(StrikeClient.class);
+
     @Override
     public void start(Stage primaryStage) throws Exception {
 
-        String[] args = getParameters().getRaw().toArray(new String[0]);
+        String[] args = new String[6];
+        args[0] = "-p";
+        args[1] = "4444";
+        args[2] = "-i";
+        args[3] = "user";
+        args[4] = "-h";
+        args[5] = "localhost";
+
+        // String[] args = getParameters().getRaw().toArray(new String[0]);
+
         ComLineValues values = new ComLineValues();
         CmdLineParser cmdLineParser = new CmdLineParser(values);
+
         logger.info("Parsing args...");
         cmdLineParser.parseArgument(args);
 
@@ -104,5 +114,12 @@ public class StrikeClient extends Application {
         launch(args);
     }
 
-    private static final Logger logger = LogManager.getLogger(StrikeClient.class);
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+
+        if(client.isRunning()) {
+            client.SendMessage("#quit");
+        }
+    }
 }
