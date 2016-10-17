@@ -5,6 +5,7 @@ public enum Protocol {
     serverid, locked, approved, roomchange, former, roomid, releaseidentity,
     list, quit, who, createroom, roomlist, rooms, roomcontents, identities, owner,
     lockroomid, releaseroomid, deleteroom, message, content, join, route, host, port,
-    movejoin, serverchange
+    movejoin, serverchange, authenticate, username, password, rememberme, authresponse,
+    success, reason
     ;
 }

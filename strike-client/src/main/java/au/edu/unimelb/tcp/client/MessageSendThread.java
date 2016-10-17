@@ -1,15 +1,15 @@
 package au.edu.unimelb.tcp.client;
 
+import org.json.simple.JSONObject;
+
+import javax.net.ssl.SSLSocket;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 import java.util.Scanner;
-
-import org.json.simple.JSONObject;
 
 public class MessageSendThread implements Runnable {
 
-	private Socket socket;
+	private SSLSocket socket;
 
 	private DataOutputStream out;
 	
@@ -20,7 +20,7 @@ public class MessageSendThread implements Runnable {
 	// reading from console
 	private Scanner cmdin = new Scanner(System.in);
 
-	public MessageSendThread(Socket socket, State state, boolean debug) throws IOException {
+	public MessageSendThread(SSLSocket socket, State state, boolean debug) throws IOException {
 		this.socket = socket;
 		this.state = state;
 		out = new DataOutputStream(socket.getOutputStream());
@@ -61,7 +61,7 @@ public class MessageSendThread implements Runnable {
 	}
 	
 	// send command and check validity
-	public void MessageSend(Socket socket, String msg) throws IOException {
+	public void MessageSend(SSLSocket socket, String msg) throws IOException {
 		JSONObject sendToServer = new JSONObject();
 		String []array = msg.split(" ");
 		if(!array[0].startsWith("#")) {
@@ -115,7 +115,7 @@ public class MessageSendThread implements Runnable {
 		
 	}
 
-	public void switchServer(Socket temp_socket, DataOutputStream temp_out) throws IOException {
+	public void switchServer(SSLSocket temp_socket, DataOutputStream temp_out) throws IOException {
 		// switch server initiated by the receiving thread
 		// need to use synchronize
 		synchronized(out) {
@@ -125,7 +125,7 @@ public class MessageSendThread implements Runnable {
 		socket = temp_socket;
 	}
 
-	public Socket getSocket() {
+	public SSLSocket getSocket() {
 		return socket;
 	}
 }
