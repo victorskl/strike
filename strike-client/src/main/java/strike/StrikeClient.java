@@ -31,6 +31,7 @@ public class StrikeClient extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
 
+        // This is temporary so that the GUI will at least load.
         String[] args = new String[6];
         args[0] = "-p";
         args[1] = "4444";
