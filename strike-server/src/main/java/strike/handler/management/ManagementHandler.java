@@ -6,7 +6,7 @@ import strike.service.JSONMessageBuilder;
 import strike.service.ManagementConnection;
 import strike.service.ServerState;
 
-import java.net.Socket;
+import javax.net.ssl.SSLSocket;
 import java.util.concurrent.BlockingQueue;
 
 public class ManagementHandler {
@@ -15,7 +15,7 @@ public class ManagementHandler {
     protected ServerState serverState = ServerState.getInstance();
 
     protected BlockingQueue<Message> messageQueue;
-    private Socket clientSocket;
+    private SSLSocket clientSocket;
     protected JSONObject jsonMessage;
     private ManagementConnection managementConnection;
 

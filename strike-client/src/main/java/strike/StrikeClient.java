@@ -1,14 +1,23 @@
 package strike;
 
 import au.edu.unimelb.tcp.client.Client;
+import au.edu.unimelb.tcp.client.ComLineValues;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 import strike.controller.Login;
 
+import java.io.File;
 import java.io.IOException;
 
 public class StrikeClient extends Application {
@@ -17,8 +26,28 @@ public class StrikeClient extends Application {
     private BorderPane rootLayout;
     private Client client;
 
+    private Configuration systemProperties;
+
     @Override
     public void start(Stage primaryStage) throws Exception {
+
+        String[] args = getParameters().getRaw().toArray(new String[0]);
+        ComLineValues values = new ComLineValues();
+        CmdLineParser cmdLineParser = new CmdLineParser(values);
+        logger.info("Parsing args...");
+        cmdLineParser.parseArgument(args);
+
+        logger.info("option: -c " + values.getSystemPropertiesFile().toString());
+        logger.info("Reading system properties file: " + values.getSystemPropertiesFile().toString());
+        try {
+            Configurations configs = new Configurations();
+            systemProperties = configs.properties(values.getSystemPropertiesFile());
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
+        }
+        logger.info("Setting up SSL system environment...");
+        System.setProperty("javax.net.ssl.trustStore", systemProperties.getString("keystore"));
+        //System.setProperty("javax.net.debug","all"); // uncomment to debug SSL, and comment it back there after
 
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle("Strike Chat Client");
@@ -30,7 +59,7 @@ public class StrikeClient extends Application {
             showLogin();
         }
 
-        client = new Client(getParameters().getRaw().toArray(new String[0]));
+        client = new Client(values);
     }
 
     private void initRootLayout() {
@@ -74,4 +103,6 @@ public class StrikeClient extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+
+    private static final Logger logger = LogManager.getLogger(StrikeClient.class);
 }

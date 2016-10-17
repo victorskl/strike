@@ -8,6 +8,8 @@ import javafx.scene.control.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import strike.StrikeClient;
 
 import java.util.ArrayList;
@@ -55,7 +57,7 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
          * Initializes the controller class. This method is automatically called
          * after the fxml file has been loaded.
          */
-        System.out.println("ChatWindow Controller Init...");
+        logger.info("ChatWindow Controller Init...");
 
         idChatWindowContents.heightProperty().addListener((observable, oldVal, newVal) -> {
             idScrollPane.setVvalue(newVal.doubleValue());
@@ -192,4 +194,6 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
             setClients(clients);
         });
     }
+
+    private static final Logger logger = LogManager.getLogger(ChatWindowController.class);
 }

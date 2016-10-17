@@ -1,9 +1,12 @@
 package strike.handler;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import strike.handler.client.*;
 import strike.handler.management.*;
 import strike.model.Protocol;
+import strike.service.ClientConnection;
 
 public class ProtocolHandlerFactory {
 
@@ -14,6 +17,20 @@ public class ProtocolHandlerFactory {
         }
 
         String type = (String) jsonMessage.get(Protocol.type.toString());
+
+        try {
+            ClientConnection clientConnection = (ClientConnection) connection;
+            if (!clientConnection.getCurrentUser().isAuthenticated()) {
+                if (type.equalsIgnoreCase(Protocol.authenticate.toString())) {
+                    return new AuthenticateProtocolHandler(jsonMessage, connection);
+                }
+                return new UnauthorisedExitHandler(jsonMessage, connection);
+            }
+        } catch (ClassCastException ce) {
+            //TODO to better deal with ManagementConnection, bypass for now
+            //ce.printStackTrace();
+            logger.warn(ce.getMessage());
+        }
 
         if (type.equalsIgnoreCase(Protocol.newidentity.toString())) {
             return new NewIdentityProtocolHandler(jsonMessage, connection);
@@ -93,4 +110,6 @@ public class ProtocolHandlerFactory {
         // delete room
         return new DeleteRoomServerProtocolHandler(jsonMessage, connection);
     }
+
+    private static final Logger logger = LogManager.getLogger(ProtocolHandlerFactory.class);
 }

@@ -2,12 +2,12 @@ package strike.model;
 
 import strike.service.ClientConnection;
 
-import java.net.Socket;
+import javax.net.ssl.SSLSocket;
 
 public class UserInfo {
     private String identity;
     private String currentChatRoom;
-    private Socket socket;
+    private SSLSocket socket;
     private ClientConnection managingThread;
     private boolean roomOwner = false;
 
@@ -27,11 +27,11 @@ public class UserInfo {
         this.currentChatRoom = currentChatRoom;
     }
 
-    public Socket getSocket() {
+    public SSLSocket getSocket() {
         return socket;
     }
 
-    public void setSocket(Socket socket) {
+    public void setSocket(SSLSocket socket) {
         this.socket = socket;
     }
 

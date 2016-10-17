@@ -8,8 +8,8 @@ import org.json.simple.parser.ParseException;
 import strike.handler.ProtocolHandlerFactory;
 import strike.model.Message;
 
+import javax.net.ssl.SSLSocket;
 import java.io.*;
-import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,10 +22,10 @@ public class ManagementConnection implements Runnable {
     private ExecutorService pool;
     private JSONParser parser;
 
-    private Socket clientSocket;
+    private SSLSocket clientSocket;
     private BlockingQueue<Message> messageQueue;
 
-    public ManagementConnection(Socket clientSocket) {
+    public ManagementConnection(SSLSocket clientSocket) {
         try {
             this.clientSocket = clientSocket;
             this.reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8"));;
@@ -90,7 +90,7 @@ public class ManagementConnection implements Runnable {
         return messageQueue;
     }
 
-    public Socket getClientSocket() {
+    public SSLSocket getClientSocket() {
         return clientSocket;
     }
 

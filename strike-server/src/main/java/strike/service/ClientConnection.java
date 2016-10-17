@@ -2,15 +2,18 @@ package strike.service;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import strike.handler.ProtocolHandlerFactory;
 import strike.model.Message;
 import strike.model.Protocol;
 import strike.model.UserInfo;
 
+import javax.net.ssl.SSLSocket;
 import java.io.*;
-import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,12 +26,14 @@ public class ClientConnection implements Runnable {
     private ExecutorService pool;
     private JSONParser parser;
 
-    private Socket clientSocket;
+    private SSLSocket clientSocket;
     private BlockingQueue<Message> messageQueue;
     private UserInfo userInfo;
     private boolean routed = false;
 
-    public ClientConnection(Socket clientSocket) {
+    private Subject currentUser;
+
+    public ClientConnection(SSLSocket clientSocket) {
         try {
             this.clientSocket = clientSocket;
             this.reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8"));
@@ -36,6 +41,8 @@ public class ClientConnection implements Runnable {
             this.messageQueue = new LinkedBlockingQueue<>();
             this.parser = new JSONParser();
             this.pool = Executors.newSingleThreadExecutor();
+
+            currentUser = SecurityUtils.getSubject(); // bind it to this connection thread context
         } catch (Exception e) {
             logger.trace(e.getMessage());
         }
@@ -88,6 +95,11 @@ public class ClientConnection implements Runnable {
         } catch (Exception e) {
             logger.trace(e.getMessage());
             pool.shutdownNow();
+        } finally {
+            if (currentUser != null) {
+                logger.info("Client disconnected: " + currentUser.getPrincipal());
+                currentUser.logout();
+            }
         }
     }
 
@@ -107,7 +119,7 @@ public class ClientConnection implements Runnable {
         return messageQueue;
     }
 
-    public Socket getClientSocket() {
+    public SSLSocket getClientSocket() {
         return clientSocket;
     }
 
@@ -125,6 +137,10 @@ public class ClientConnection implements Runnable {
 
     public void setRouted(boolean routed) {
         this.routed = routed;
+    }
+
+    public Subject getCurrentUser() {
+        return currentUser;
     }
 
     private static final Logger logger = LogManager.getLogger(ClientConnection.class);

@@ -1,47 +1,51 @@
 package au.edu.unimelb.tcp.client;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Observable;
-import java.util.Set;
-
 import org.json.simple.parser.ParseException;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
+
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Set;
 
 public class Client {
 
-	String[] args;
+	//String[] args;
+    private ComLineValues values;
 
 	MessageSendThread messageSendThread;
 
+    /**
+     * @deprecated use Client(ComLineValues values) constructor instead
+     */
+    @Deprecated
 	public Client(String[] args) {
-		this.args = args;
+		//this.args = args;
+        throw new UnsupportedOperationException("move to: new Client(ComLineValues values)");
 	}
 
+	public Client(ComLineValues values) {
+        this.values = values;
+    }
+
 	public void run() throws IOException, ParseException {
-		Socket socket = null;
+		SSLSocket socket = null;
 		String identity = null;
 		boolean debug = false;
 		try {
 			//load command line args
-			ComLineValues values = new ComLineValues();
-			CmdLineParser parser = new CmdLineParser(values);
-			try {
-				parser.parseArgument(args);
-				String hostname = values.getHost();
-				identity = values.getIdeneity();
-				int port = values.getPort();
-				debug = values.isDebug();
-				socket = new Socket(hostname, port);
-			} catch (CmdLineException e) {
-				e.printStackTrace();
-			}
-			
-			State state = new State(identity, "");
+			//ComLineValues values = new ComLineValues();
+			//CmdLineParser parser = new CmdLineParser(values);
+            //parser.parseArgument(args);
+            String hostname = values.getHost();
+            identity = values.getIdeneity();
+            int port = values.getPort();
+            debug = values.isDebug();
+            SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            socket = (SSLSocket) sslsocketfactory.createSocket(hostname, port);
+
+            State state = new State(identity, "");
 			
 			// start sending thread
 			messageSendThread = new MessageSendThread(socket, state, debug);
