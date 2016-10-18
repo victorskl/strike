@@ -6,9 +6,9 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import strike.common.model.Protocol;
 import strike.handler.ProtocolHandlerFactory;
 import strike.model.Message;
-import strike.common.model.Protocol;
 import strike.model.UserInfo;
 
 import javax.net.ssl.SSLSocket;
@@ -40,8 +40,6 @@ public class ClientConnection implements Runnable {
             this.messageQueue = new LinkedBlockingQueue<>();
             this.parser = new JSONParser();
             this.pool = Executors.newSingleThreadExecutor();
-
-            currentUser = SecurityUtils.getSubject(); // bind it to this connection thread context
         } catch (Exception e) {
             logger.trace(e.getMessage());
         }
@@ -52,6 +50,9 @@ public class ClientConnection implements Runnable {
 
         try {
 
+            this.currentUser = SecurityUtils.getSubject();
+            logger.trace("[INIT] " + currentUser.getPrincipal() + ", " + currentUser.isAuthenticated() + ", " + currentUser.getSession().getId());
+
             pool.execute(new MessageReader(reader, messageQueue));
 
             while (true) {
@@ -61,7 +62,7 @@ public class ClientConnection implements Runnable {
 
                 if (!msg.isFromClient() && msg.getMessage().equalsIgnoreCase("exit")) {
                     //The client program is abruptly terminated (e.g. using Ctrl-C)
-                    ProtocolHandlerFactory.newHandler(null, this).handle();
+                    ProtocolHandlerFactory.newClientHandler(null, this).handle();
                     logger.trace("EOF");
                     break;
                 }
@@ -71,7 +72,11 @@ public class ClientConnection implements Runnable {
                     JSONObject jsonMessage = (JSONObject) parser.parse(msg.getMessage());
                     logger.debug("Receiving: " + msg.getMessage());
 
-                    ProtocolHandlerFactory.newHandler(jsonMessage, this).handle();
+                    logger.trace("[BEFORE] " + currentUser.getPrincipal() + ", " + currentUser.isAuthenticated() + ", " + currentUser.getSession().getId());
+
+                    ProtocolHandlerFactory.newClientHandler(jsonMessage, this).handle();
+
+                    logger.trace("[AFTER] " + currentUser.getPrincipal() + ", " + currentUser.isAuthenticated() + ", " + currentUser.getSession().getId());
 
                     String type = (String) jsonMessage.get(Protocol.type.toString());
                     if (type.equalsIgnoreCase(Protocol.quit.toString())) break;

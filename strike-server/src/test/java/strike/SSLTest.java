@@ -73,19 +73,25 @@ public class SSLTest {
         testSSLClient(5555);
     }
 
-    private void makeLoginMessage() {
+    private void makeLoginMessage(String username, String password) {
         // {"type" : "authenticate", "username" : "ray@example.com", "password":"cheese", "rememberme":"true"}
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.authenticate.toString());
-        jj.put(Protocol.username.toString(), "root"); // define in shiro.ini
-        jj.put(Protocol.password.toString(), "secret"); // define in shiro.ini
+        jj.put(Protocol.username.toString(), username); // define in shiro.ini
+        jj.put(Protocol.password.toString(), password); // define in shiro.ini
         jj.put(Protocol.rememberme.toString(), "false"); // true or false or not provide
         messages.add(jj.toJSONString());
     }
 
     @Test @Ignore
-    public void loginTest() {
-        makeLoginMessage();
+    public void rootLoginTest() {
+        makeLoginMessage("root", "secret");
+        testSSLClient(4444);
+    }
+
+    @Test @Ignore
+    public void guestLoginTest() {
+        makeLoginMessage("guest", "guest");
         testSSLClient(4444);
     }
 
@@ -102,23 +108,23 @@ public class SSLTest {
         testSSLClient(4444);
     }
 
-    private void makeNewIdentityMessage() {
+    private void makeNewIdentityMessage(String screenName) {
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.newidentity.toString());
-        jj.put(Protocol.identity.toString(), "ScreenName");
+        jj.put(Protocol.identity.toString(), screenName);
         messages.add(jj.toJSONString());
     }
 
     @Test @Ignore
     public void loginBypassTest() {
-        makeNewIdentityMessage();
+        makeNewIdentityMessage("Hacker");
         testSSLClient(4444);
     }
 
     @Test @Ignore
-    public void loginAndNewIdentityTest() {
-        makeLoginMessage();
-        makeNewIdentityMessage();
+    public void rootLoginAndNewIdentityTest() {
+        makeLoginMessage("root", "secret");
+        makeNewIdentityMessage("ScreenName8888");
         testSSLClient(4444);
     }
 
@@ -150,6 +156,10 @@ public class SSLTest {
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
+            }
+
+            while (reader.readLine() != null) {
+
             }
 
             writer.close();

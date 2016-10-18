@@ -2,6 +2,7 @@ package strike.service;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.shiro.subject.Subject;
 
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -31,7 +32,10 @@ public class ClientService implements Runnable {
             logger.info("Server listening client on port "+ serverSocket.getLocalPort() +" for a connection...");
 
             while (!serverState.isStopRunning()) {
-                pool.execute(new ClientConnection((SSLSocket) serverSocket.accept()));
+                Runnable clientConnection = new ClientConnection((SSLSocket) serverSocket.accept());
+                Subject subject = new Subject.Builder().buildSubject();
+                clientConnection = subject.associateWith(clientConnection);
+                pool.execute(clientConnection);
             }
 
             pool.shutdown();

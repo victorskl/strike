@@ -3,42 +3,58 @@ package strike.handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
+import strike.common.model.Protocol;
 import strike.handler.client.*;
 import strike.handler.management.*;
-import strike.common.model.Protocol;
 import strike.service.ClientConnection;
+import strike.service.ManagementConnection;
 
 public class ProtocolHandlerFactory {
 
+    /**
+     * @deprecated use newClientHandler() or newManagementHandler()
+     */
+    @Deprecated
     public static IProtocolHandler newHandler(JSONObject jsonMessage, Runnable connection) {
 
+        if (connection instanceof ClientConnection) newClientHandler(jsonMessage, connection);
+
+        if (connection instanceof ManagementConnection) newManagementHandler(jsonMessage, connection);
+
+        return new BlackHoleHandler();
+    }
+
+    public static IProtocolHandler newClientHandler(JSONObject jsonMessage, Runnable connection) {
+
+        if (connection instanceof ManagementConnection) new BlackHoleHandler();
+
         if (jsonMessage == null) {
-            return new AbruptExitHandler(jsonMessage, connection);
+            return new AbruptExitHandler(null, connection);
         }
 
         String type = (String) jsonMessage.get(Protocol.type.toString());
 
-        try {
-            ClientConnection clientConnection = (ClientConnection) connection;
-            if (!clientConnection.getCurrentUser().isAuthenticated()) {
-                if (type.equalsIgnoreCase(Protocol.authenticate.toString())) {
-                    return new AuthenticateProtocolHandler(jsonMessage, connection);
-                }
-                return new UnauthorisedExitHandler(jsonMessage, connection);
-            }
-        } catch (ClassCastException ce) {
-            //TODO to better deal with ManagementConnection, bypass for now
-            //ce.printStackTrace();
-            logger.warn(ce.getMessage());
-        }
+        // Public protocols i.e before login
 
-        if (type.equalsIgnoreCase(Protocol.newidentity.toString())) {
-            return new NewIdentityProtocolHandler(jsonMessage, connection);
+        if (type.equalsIgnoreCase(Protocol.authenticate.toString())) {
+            return new AuthenticateProtocolHandler(jsonMessage, connection);
         }
 
         // Added 16/20/16 by Ray
         if (type.equalsIgnoreCase(Protocol.listserver.toString())){
             return new ListServerProtocolHandler(jsonMessage,connection);
+        }
+
+        // Authenticated protocols
+
+        ClientConnection clientConnection = (ClientConnection) connection;
+
+        if (!clientConnection.getCurrentUser().isAuthenticated()) {
+            return new UnauthorisedExitHandler(jsonMessage, connection);
+        }
+
+        if (type.equalsIgnoreCase(Protocol.newidentity.toString())) {
+            return new NewIdentityProtocolHandler(jsonMessage, connection);
         }
 
         if (type.equalsIgnoreCase(Protocol.list.toString())) {
@@ -69,13 +85,20 @@ public class ProtocolHandlerFactory {
             return new QuitProtocolHandler(jsonMessage, connection);
         }
 
-        // Resolve Protocol type clashes
-
         if (type.equalsIgnoreCase(Protocol.deleteroom.toString())) {
-            return resolveDeleteRoomProtocol(jsonMessage, connection);
+            return new DeleteRoomProtocolHandler(jsonMessage, connection);
         }
 
+        return new BlackHoleHandler();
+    }
+
+    public static IProtocolHandler newManagementHandler(JSONObject jsonMessage, Runnable connection) {
+
+        if (connection instanceof ClientConnection) return new BlackHoleHandler();
+
         // Management Protocols
+
+        String type = (String) jsonMessage.get(Protocol.type.toString());
 
         // acquire lock for user id
         if (type.equalsIgnoreCase(Protocol.lockidentity.toString())) {
@@ -97,18 +120,11 @@ public class ProtocolHandlerFactory {
             return new ReleaseRoomIdProtocolHandler(jsonMessage, connection);
         }
 
-        return null;
-    }
-
-    private static IProtocolHandler resolveDeleteRoomProtocol(JSONObject jsonMessage, Runnable connection) {
-        String serverId = (String) jsonMessage.get(Protocol.serverid.toString());
-
-        if (serverId == null) {
-            return new DeleteRoomProtocolHandler(jsonMessage, connection);
+        if (type.equalsIgnoreCase(Protocol.deleteroom.toString())) {
+            return new DeleteRoomServerProtocolHandler(jsonMessage, connection);
         }
 
-        // delete room
-        return new DeleteRoomServerProtocolHandler(jsonMessage, connection);
+        return new BlackHoleHandler();
     }
 
     private static final Logger logger = LogManager.getLogger(ProtocolHandlerFactory.class);
