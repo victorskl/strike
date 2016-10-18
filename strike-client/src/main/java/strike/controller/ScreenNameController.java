@@ -64,7 +64,6 @@ public class ScreenNameController {
                 ChatWindowController controller = loader.getController();
                 controller.setStrikeClient(this.strikeClient);
 
-                // Super temporary.
                 try {
                     this.strikeClient.getClient().run();
                 }
