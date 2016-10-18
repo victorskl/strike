@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import strike.handler.IProtocolHandler;
 import strike.model.Message;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 import strike.model.UserInfo;
 
 public class NewIdentityProtocolHandler extends CommonHandler implements IProtocolHandler {

@@ -4,7 +4,7 @@ import org.json.simple.JSONObject;
 import strike.handler.IProtocolHandler;
 import strike.model.LocalChatRoomInfo;
 import strike.model.Message;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 
 public class DeleteRoomProtocolHandler extends CommonHandler implements IProtocolHandler {
 

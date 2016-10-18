@@ -7,7 +7,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 import strike.model.ServerInfo;
 
 import java.io.*;

@@ -4,7 +4,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import strike.model.ChatRoomInfo;
 import strike.model.LocalChatRoomInfo;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 import strike.model.ServerInfo;
 
 import java.util.stream.Collectors;

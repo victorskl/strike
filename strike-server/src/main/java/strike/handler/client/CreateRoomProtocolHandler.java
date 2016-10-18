@@ -3,7 +3,7 @@ package strike.handler.client;
 import org.json.simple.JSONObject;
 import strike.handler.IProtocolHandler;
 import strike.model.LocalChatRoomInfo;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 
 public class CreateRoomProtocolHandler extends CommonHandler implements IProtocolHandler {
 

@@ -3,7 +3,7 @@ package strike.handler.management;
 import org.json.simple.JSONObject;
 import strike.handler.IProtocolHandler;
 import strike.model.Message;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 
 public class LockIdentityProtocolHandler extends ManagementHandler implements IProtocolHandler {
 

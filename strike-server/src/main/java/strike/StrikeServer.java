@@ -23,7 +23,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import strike.model.LocalChatRoomInfo;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 import strike.model.RemoteChatRoomInfo;
 import strike.model.ServerInfo;
 import strike.service.*;

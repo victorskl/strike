@@ -7,7 +7,7 @@ import org.apache.shiro.subject.Subject;
 import org.json.simple.JSONObject;
 import strike.handler.IProtocolHandler;
 import strike.model.Message;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 
 public class AuthenticateProtocolHandler extends CommonHandler implements IProtocolHandler {
 

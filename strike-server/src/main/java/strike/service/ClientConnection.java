@@ -6,10 +6,9 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import strike.handler.ProtocolHandlerFactory;
 import strike.model.Message;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 import strike.model.UserInfo;
 
 import javax.net.ssl.SSLSocket;

@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import strike.handler.client.*;
 import strike.handler.management.*;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 import strike.service.ClientConnection;
 
 public class ProtocolHandlerFactory {

@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import strike.model.Protocol;
+import strike.common.model.Protocol;
 import strike.model.ServerInfo;
 
 import javax.net.ssl.SSLSocket;

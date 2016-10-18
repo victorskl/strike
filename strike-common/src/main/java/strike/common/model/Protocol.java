@@ -1,4 +1,4 @@
-package strike.model;
+package strike.common.model;
 
 public enum Protocol {
     type, newidentity, identity, lockidentity,
