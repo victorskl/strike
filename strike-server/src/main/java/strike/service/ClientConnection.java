@@ -31,6 +31,7 @@ public class ClientConnection implements Runnable {
     private boolean routed = false;
 
     private Subject currentUser;
+    private ServerState serverState = ServerState.getInstance();
 
     public ClientConnection(SSLSocket clientSocket) {
         try {
@@ -100,10 +101,7 @@ public class ClientConnection implements Runnable {
             logger.trace(e.getMessage());
             pool.shutdownNow();
         } finally {
-            if (currentUser != null) {
-                logger.info("Client disconnected: " + currentUser.getPrincipal());
-                currentUser.logout();
-            }
+            performUserLogoutAndUserSessionCleanUp();
         }
     }
 
@@ -116,6 +114,25 @@ public class ClientConnection implements Runnable {
 
         } catch (IOException e) {
             logger.trace(e.getMessage());
+        }
+    }
+
+    public void performUserLogoutAndUserSessionCleanUp() {
+        if (currentUser != null) {
+            logger.info("Client disconnected: " + currentUser.getPrincipal());
+
+            Subject currentUser = getCurrentUser();
+            String username = (String) currentUser.getPrincipal();
+            String sessionId = (String) currentUser.getSession().getId();
+
+            new PeerClient().relayPeers(JSONMessageBuilder.getInstance().notifyUserSession(username, sessionId, "logout"));
+
+            serverState.getLocalUserSessions().remove(sessionId);
+
+            logger.info(username + " with session [" + sessionId + "] has forced log out.");
+
+            // must be last
+            currentUser.logout();
         }
     }
 

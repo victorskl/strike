@@ -40,6 +40,19 @@ public class JSONMessageBuilder {
         return jj.toJSONString();
     }
 
+    public String route(String joiningRoomId, String host, Integer port, String username, String sessionId, String password) {
+        // {"type" : "route", "roomid" : "jokes", "host" : "122.134.2.4", "port" : "4445", "username" : "xxx", "sessionId" : "xxx"}
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.route.toString());
+        jj.put(Protocol.roomid.toString(), joiningRoomId);
+        jj.put(Protocol.host.toString(), host);
+        jj.put(Protocol.port.toString(), port.toString());
+        jj.put(Protocol.username.toString(), username);
+        jj.put(Protocol.sessionid.toString(), sessionId);
+        jj.put(Protocol.password.toString(), password);
+        return jj.toJSONString();
+    }
+
     public String message(String identity, String content) {
         // {"type" : "message", "identity" : "Adel", "content" : "Hi there!"}
         JSONObject jj = new JSONObject();
@@ -228,6 +241,37 @@ public class JSONMessageBuilder {
         jj.put(Protocol.type.toString(), Protocol.authresponse.toString());
         jj.put(Protocol.success.toString(), success);
         jj.put(Protocol.reason.toString(), reason);
+        return jj.toJSONString();
+    }
+
+    public String notifyUserSession(String username, String sessionId, String status) {
+        // {"type" : "notifyusersession", "username" : "ray", "sessionid" : "ba64077b-85b4-40f0-a5ac-480ad3e341b3", "serverid", "s1", "status", "login"}
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.notifyusersession.toString());
+        jj.put(Protocol.username.toString(), username);
+        jj.put(Protocol.sessionid.toString(), sessionId);
+        jj.put(Protocol.serverid.toString(), serverInfo.getServerId());
+        jj.put(Protocol.status.toString(), status);
+        return jj.toJSONString();
+    }
+
+    public String makeLoginMessage(String username, String password) {
+        // {"type" : "authenticate", "username" : "ray@example.com", "password":"cheese", "rememberme":"true"}
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.authenticate.toString());
+        jj.put(Protocol.username.toString(), username); // define in shiro.ini
+        jj.put(Protocol.password.toString(), password); // define in shiro.ini
+        jj.put(Protocol.rememberme.toString(), "false"); // true or false or not provide
+        return jj.toJSONString();
+    }
+
+    // Heartbeat
+
+    public String aliveMessage() {
+        // {"type":"alive", "serverid":"s2"}
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.alive.toString());
+        jj.put(Protocol.serverid.toString(), serverInfo.getServerId());
         return jj.toJSONString();
     }
 }

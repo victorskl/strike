@@ -34,7 +34,7 @@ public class ProtocolHandlerFactory {
 
         String type = (String) jsonMessage.get(Protocol.type.toString());
 
-        // Public protocols i.e before login
+        //-- START Public protocols i.e before login
 
         if (type.equalsIgnoreCase(Protocol.authenticate.toString())) {
             return new AuthenticateProtocolHandler(jsonMessage, connection);
@@ -45,7 +45,14 @@ public class ProtocolHandlerFactory {
             return new ListServerProtocolHandler(jsonMessage,connection);
         }
 
-        // Authenticated protocols
+        // will check authentication inside handler itself
+        if (type.equalsIgnoreCase(Protocol.movejoin.toString())) {
+            return new MoveJoinProtocolHandler(jsonMessage, connection);
+        }
+
+        //-- END Public protocols i.e before login
+
+        //-- Protocols that required to be authenticated - sweep check point
 
         ClientConnection clientConnection = (ClientConnection) connection;
 
@@ -71,10 +78,6 @@ public class ProtocolHandlerFactory {
 
         if (type.equalsIgnoreCase(Protocol.join.toString())) {
             return new JoinProtocolHandler(jsonMessage, connection);
-        }
-
-        if (type.equalsIgnoreCase(Protocol.movejoin.toString())) {
-            return new MoveJoinProtocolHandler(jsonMessage, connection);
         }
 
         if (type.equalsIgnoreCase(Protocol.message.toString())) {
@@ -122,6 +125,14 @@ public class ProtocolHandlerFactory {
 
         if (type.equalsIgnoreCase(Protocol.deleteroom.toString())) {
             return new DeleteRoomServerProtocolHandler(jsonMessage, connection);
+        }
+
+        if (type.equalsIgnoreCase(Protocol.notifyusersession.toString())) {
+            return new NotifyUserSessionHandler(jsonMessage, connection);
+        }
+
+        if (type.equalsIgnoreCase(Protocol.alive.toString())) {
+            return new AliveHeartbeatHandler(jsonMessage, connection);
         }
 
         return new BlackHoleHandler();

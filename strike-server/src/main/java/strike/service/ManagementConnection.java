@@ -58,7 +58,7 @@ public class ManagementConnection implements Runnable {
                     JSONObject jsonMessage = (JSONObject) parser.parse(msg.getMessage());
                     logger.debug("[S2S]Receiving: " + msg.getMessage());
 
-                    ProtocolHandlerFactory.newHandler(jsonMessage, this).handle();
+                    ProtocolHandlerFactory.newManagementHandler(jsonMessage, this).handle();
 
                 } else {
                     logger.debug("[S2S]Sending  : " + msg.getMessage());

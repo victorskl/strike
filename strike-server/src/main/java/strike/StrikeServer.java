@@ -22,8 +22,12 @@ import org.json.simple.parser.ParseException;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
-import strike.model.LocalChatRoomInfo;
+import org.quartz.*;
+import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
+import strike.heartbeat.AliveJob;
+import strike.heartbeat.VoteOutServerJob;
+import strike.model.LocalChatRoomInfo;
 import strike.model.RemoteChatRoomInfo;
 import strike.model.ServerInfo;
 import strike.service.*;
@@ -108,11 +112,48 @@ public class StrikeServer {
             //addMainHallsStatically();
             syncChatRooms();
 
+            //startHeartBeat();
+
             // Shutdown hook
             Runtime.getRuntime().addShutdownHook(new ShutdownService(servicePool));
 
         } catch (CmdLineException e) {
             logger.trace(e.getMessage());
+        }
+    }
+
+    private void startHeartBeat() {
+        try {
+
+            JobDetail aliveJob = JobBuilder.newJob(AliveJob.class)
+                    .withIdentity("AliveJob", "group1").build();
+
+            Trigger aliveTrigger = TriggerBuilder
+                    .newTrigger()
+                    .withIdentity("AliveJobTrigger", "group1")
+                    .withSchedule(
+                            SimpleScheduleBuilder.simpleSchedule()
+                                    .withIntervalInSeconds(systemProperties.getInt("alive.interval")).repeatForever())
+                    .build();
+
+            JobDetail voteJob = JobBuilder.newJob(VoteOutServerJob.class)
+                    .withIdentity("VoteJob", "group1").build();
+
+            Trigger voteTrigger = TriggerBuilder
+                    .newTrigger()
+                    .withIdentity("VoteJobTrigger", "group1")
+                    .withSchedule(
+                            SimpleScheduleBuilder.simpleSchedule()
+                                    .withIntervalInSeconds(systemProperties.getInt("vote.interval")).repeatForever())
+                    .build();
+
+            Scheduler scheduler = new StdSchedulerFactory().getScheduler();
+            scheduler.start();
+            scheduler.scheduleJob(aliveJob, aliveTrigger);
+            scheduler.scheduleJob(voteJob, voteTrigger);
+
+        } catch (SchedulerException e) {
+            e.printStackTrace();
         }
     }
 
@@ -193,6 +234,7 @@ public class StrikeServer {
                 if (resp != null) {
                     try {
                         JSONObject jsonMessage = (JSONObject) parser.parse(resp);
+                        logger.trace("syncChatRooms: " + jsonMessage.toJSONString());
                         JSONArray ja = (JSONArray) jsonMessage.get(Protocol.rooms.toString());
                         for (Object o : ja.toArray()) {
                             String room = (String) o;

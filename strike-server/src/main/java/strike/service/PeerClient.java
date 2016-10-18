@@ -14,6 +14,7 @@ import java.io.*;
 
 public class PeerClient {
 
+    private JSONMessageBuilder messageBuilder = JSONMessageBuilder.getInstance();
     private ServerState serverState = ServerState.getInstance();
     private ServerInfo serverInfo = serverState.getServerInfo();
     private JSONParser parser;
@@ -137,6 +138,9 @@ public class PeerClient {
         try {
             socket = (SSLSocket) sslsocketfactory.createSocket(server.getAddress(), server.getPort());
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+
+            performSystemDaemonAuthentication(writer);
+
             writer.write(message + "\n");
             writer.flush();
 
@@ -144,7 +148,13 @@ public class PeerClient {
                     + "@" + server.getAddress() + ":" + server.getPort() + "] " + message);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-            return reader.readLine();
+
+            String resp = null;
+            for (int i = 0; i < 2; i++) { // 2 = one for performSystemDaemonAuthentication, one for actual message response
+                resp = reader.readLine();
+            }
+
+            return resp;
 
         } catch (IOException ioe) {
             //ioe.printStackTrace();
@@ -161,6 +171,12 @@ public class PeerClient {
         }
 
         return null;
+    }
+
+    private void performSystemDaemonAuthentication(BufferedWriter writer) throws IOException {
+        logger.trace("Sending systemdaemon login request...");
+        writer.write(messageBuilder.makeLoginMessage("systemdaemon", "gaja5EPrEB5T") + "\n");
+        writer.flush();
     }
 
     private static final Logger logger = LogManager.getLogger(PeerClient.class);

@@ -1,15 +1,13 @@
 package strike.service;
 
 import org.apache.commons.lang3.StringUtils;
-import strike.model.LocalChatRoomInfo;
-import strike.model.RemoteChatRoomInfo;
-import strike.model.ServerInfo;
-import strike.model.UserInfo;
+import strike.model.*;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,6 +20,9 @@ public class ServerState {
 
     private static ServerState instance;
 
+    private ConcurrentMap<String, Date> aliveMap;
+    private ConcurrentMap<String, UserSession> localUserSessions;
+    private ConcurrentMap<String, RemoteUserSession> remoteUserSessions;
     private ConcurrentMap<String, LocalChatRoomInfo> localChatRooms;
     private ConcurrentMap<String, RemoteChatRoomInfo> remoteChatRooms;
     private ConcurrentMap<String, UserInfo> connectedClients;
@@ -35,6 +36,9 @@ public class ServerState {
     private AtomicBoolean stopRunning = new AtomicBoolean(false);
 
     private ServerState() {
+        aliveMap = new ConcurrentHashMap<>();
+        localUserSessions = new ConcurrentHashMap<>();
+        remoteUserSessions = new ConcurrentHashMap<>();
         connectedClients = new ConcurrentHashMap<>();
         localChatRooms = new ConcurrentHashMap<>();
         remoteChatRooms = new ConcurrentHashMap<>();
@@ -76,6 +80,18 @@ public class ServerState {
     }
 
     // thread safe
+
+    public ConcurrentMap<String, Date> getAliveMap() {
+        return aliveMap;
+    }
+
+    public ConcurrentMap<String, UserSession> getLocalUserSessions() {
+        return localUserSessions;
+    }
+
+    public ConcurrentMap<String, RemoteUserSession> getRemoteUserSessions() {
+        return remoteUserSessions;
+    }
 
     public ConcurrentMap<String, UserInfo> getConnectedClients() {
         return connectedClients;

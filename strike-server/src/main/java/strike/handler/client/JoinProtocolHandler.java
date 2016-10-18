@@ -2,6 +2,7 @@ package strike.handler.client;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.shiro.subject.Subject;
 import org.json.simple.JSONObject;
 import strike.handler.IProtocolHandler;
 import strike.model.Message;
@@ -46,7 +47,14 @@ public class JoinProtocolHandler extends CommonHandler implements IProtocolHandl
                 RemoteChatRoomInfo remoteChatRoomInfo = serverState.getRemoteChatRooms().get(joiningRoomId);
                 ServerInfo server = serverState.getServerInfoById(remoteChatRoomInfo.getManagingServer());
 
-                messageQueue.add(new Message(false, messageBuilder.route(joiningRoomId, server.getAddress(), server.getPort())));
+                //messageQueue.add(new Message(false, messageBuilder.route(joiningRoomId, server.getAddress(), server.getPort())));
+
+                Subject currentUser = clientConnection.getCurrentUser();
+                String username = (String) currentUser.getPrincipal();
+                String sessionId = (String) currentUser.getSession().getId();
+                String password = serverState.getLocalUserSessions().get(sessionId).getPassword();
+
+                messageQueue.add(new Message(false, messageBuilder.route(joiningRoomId, server.getAddress(), server.getPort(), username, sessionId, password)));
 
                 clientConnection.setRouted(true);
 
