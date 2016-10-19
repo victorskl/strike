@@ -249,9 +249,13 @@ public class MessageReceiveThread implements Runnable {
 		
 		// server directs the client to another server
 		if (type.equals("route")) {
+
 			String temp_room = (String)message.get("roomid");
 			String host = (String)message.get("host");
 			int port = Integer.parseInt((String)message.get("port"));
+			String username = (String)message.get("username");
+			String sessionid = (String)message.get("sessionid");
+			String password = (String)message.get("password");
 			
 			// connect to the new server
 			if (debug) {
@@ -264,7 +268,7 @@ public class MessageReceiveThread implements Runnable {
 			
 			// send #movejoin
 			DataOutputStream out = new DataOutputStream(temp_socket.getOutputStream());
-			JSONObject request = ClientMessages.getMoveJoinRequest(state.getIdentity(), state.getRoomId(), temp_room);
+			JSONObject request = ClientMessages.getMoveJoinRequest(state.getIdentity(), state.getRoomId(), temp_room, username, sessionid, password);
 			if (debug) {
 				System.out.println("Sending: " + request.toJSONString());
 				System.out.print("[" + state.getRoomId() + "] " + state.getIdentity() + "> ");

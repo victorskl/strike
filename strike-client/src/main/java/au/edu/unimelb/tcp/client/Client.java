@@ -100,6 +100,10 @@ public class Client {
 		state.setIdentity(identity);
 	}
 
+	public String getIdentity() {
+		return state.getIdentity();
+	}
+
 	// Events which we can hook into for the GUI.
 
 	// Client tries to create a new identity on the server.

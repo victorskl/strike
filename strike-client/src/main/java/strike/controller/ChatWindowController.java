@@ -60,8 +60,15 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
     // Chatroom clients window
     @FXML
     private ScrollPane idClientsScrollPane;
+
     @FXML
     private TextFlow idClientsContents;
+
+    @FXML
+    private Text idRoomnameLabel;
+
+    @FXML
+    private Text idUsernameLabel;
 
     private Set<String> clientsInRoom = new HashSet<>();
 
@@ -187,6 +194,12 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
             Text text = new Text(message);
             text.setStyle("-fx-font-weight: bold");
             idChatWindowContents.getChildren().add(text);
+
+            // Update the roomname label at the top of screen.
+            idRoomnameLabel.setText(String.format("#%s", to.toUpperCase()));
+
+            // Also update the username. (Not ideal, best place to put it for now.)
+            idUsernameLabel.setText(String.format("@%s", strikeClient.getClient().getIdentity()));
 
             // Request a list of who is in the chat room.
             this.strikeClient.getClient().requestClientListUpdate();

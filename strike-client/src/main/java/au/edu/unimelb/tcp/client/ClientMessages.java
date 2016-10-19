@@ -66,12 +66,15 @@ public class ClientMessages {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static JSONObject getMoveJoinRequest(String identity, String former, String roomid) {
+	public static JSONObject getMoveJoinRequest(String identity, String former, String roomid, String username, String sessionid, String password) {
 		JSONObject movejoin = new JSONObject();
 		movejoin.put("type", "movejoin");
 		movejoin.put("identity", identity);
 		movejoin.put("former", former);
 		movejoin.put("roomid", roomid);
+		movejoin.put("username", username);
+		movejoin.put("sessionid", sessionid);
+		movejoin.put("password", password);
 		return movejoin;
 	}
 
