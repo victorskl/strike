@@ -20,6 +20,8 @@ public class Client {
 	private boolean hasStarted = false;
 	boolean debug = false;
 
+	State state;
+
 	/**
 	 * @deprecated use Client(ComLineValues values) constructor instead
 	 */
@@ -51,7 +53,7 @@ public class Client {
 
 			socket = authenticatedSocket;
 
-            State state = new State(identity, "");
+            state = new State(identity, "");
 			
 			// start sending thread
 			messageSendThread = new MessageSendThread(socket, state, debug);
@@ -85,6 +87,7 @@ public class Client {
 	}
 
 	public void attemptLoginWith(String screenName){
+		this.setIdentity(screenName);
 		SendMessage("#newidentity " + screenName);
 	}
 
@@ -94,6 +97,7 @@ public class Client {
 
 	public void setIdentity(String identity) {
 		this.identity = identity;
+		state.setIdentity(identity);
 	}
 
 	// Events which we can hook into for the GUI.

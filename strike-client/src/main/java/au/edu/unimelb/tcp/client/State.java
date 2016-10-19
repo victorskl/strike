@@ -8,7 +8,6 @@ public class State {
 	public State(String identity, String roomId) {
 		this.identity = identity;
 		this.roomId = roomId;
-		
 	}
 	
 	public synchronized String getRoomId() {
@@ -21,6 +20,8 @@ public class State {
 	public String getIdentity() {
 		return identity;
 	}
-	
-	
+
+	public void setIdentity(String identity) {
+		this.identity = identity;
+	}
 }
