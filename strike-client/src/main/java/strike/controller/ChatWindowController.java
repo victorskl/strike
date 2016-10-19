@@ -254,5 +254,34 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
         });
     }
 
+    @Override
+    public void receiveRoomList(Set<String> rooms) {
+
+        ArrayList<String> roomArray = new ArrayList<>();
+        roomArray.addAll(rooms);
+
+        Collections.sort(roomArray, (String o1, String o2) -> {
+            return o1.compareTo(o2);
+        });
+
+        Platform.runLater(() -> {
+
+            String built = "";
+            String building = roomArray.get(0);
+            roomArray.remove(0);
+
+            for(String room : rooms) {
+                built = String.format("%s, %s", building, room);
+                building = built;
+            }
+
+            String finalString = built + "\n";
+
+            Text text = new Text(finalString);
+            text.setFill(Color.GRAY);
+            idChatWindowContents.getChildren().add(text);
+        });
+    }
+
     private static final Logger logger = LogManager.getLogger(ChatWindowController.class);
 }

@@ -190,6 +190,7 @@ public class Client {
 		void userLeft(String userid);
 		void userQuit(String userid);
 		void receiveInitialClientList(Set<String> clients);
+		void receiveRoomList(Set<String> rooms);
 	}
 	public HashMap<String, IClientListUpdateHandler> clientListUpdateHandlers = new HashMap<>();
 
@@ -224,6 +225,13 @@ public class Client {
 		for (String handlerID : this.clientListUpdateHandlers.keySet()) {
 			IClientListUpdateHandler handler = this.clientListUpdateHandlers.get(handlerID);
 			handler.receiveInitialClientList(clients);
+		}
+	}
+
+	public void generatedRoomList(Set<String> rooms) {
+		for (String handlerID : this.clientListUpdateHandlers.keySet()) {
+			IClientListUpdateHandler handler = this.clientListUpdateHandlers.get(handlerID);
+			handler.receiveRoomList(rooms);
 		}
 	}
 }

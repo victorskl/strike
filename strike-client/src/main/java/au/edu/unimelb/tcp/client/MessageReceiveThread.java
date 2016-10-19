@@ -91,11 +91,18 @@ public class MessageReceiveThread implements Runnable {
 		// server reply of #list
 		if (type.equals("roomlist")) {
 			JSONArray array = (JSONArray) message.get("rooms");
+
+			HashSet<String> rooms = new HashSet<>();
+
 			// print all the rooms
 			System.out.print("List of chat rooms:");
 			for (int i = 0; i < array.size(); i++) {
+				rooms.add((String)array.get(i));
 				System.out.print(" " + array.get(i));
 			}
+
+			this.client.generatedRoomList(rooms);
+
 			System.out.println();
 			System.out.print("[" + state.getRoomId() + "] " + state.getIdentity() + "> ");
 			return;
