@@ -267,11 +267,11 @@ public class JSONMessageBuilder {
 
     // Heartbeat
 
-    public String aliveMessage() {
-        // {"type":"alive", "serverid":"s2"}
+    public String notifyServerDownMessage(String serverId) {
+        // {"type":"notifyserverdown", "serverid":"s2"}
         JSONObject jj = new JSONObject();
-        jj.put(Protocol.type.toString(), Protocol.alive.toString());
-        jj.put(Protocol.serverid.toString(), serverInfo.getServerId());
+        jj.put(Protocol.type.toString(), Protocol.notifyserverdown.toString());
+        jj.put(Protocol.serverid.toString(), serverId);
         return jj.toJSONString();
     }
 

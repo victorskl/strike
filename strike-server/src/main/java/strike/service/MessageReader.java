@@ -23,7 +23,7 @@ public class MessageReader implements Runnable {
 	public void run() {
 		try {
 
-            logger.trace("Reading messages from client connection");
+            //logger.trace("Reading messages from client connection");
 
 			String clientMsg;
 			while ((clientMsg = reader.readLine()) != null) {
@@ -53,7 +53,7 @@ public class MessageReader implements Runnable {
                  * But the connection is working either way. Put it as known issue for now.
                  * Otherwise uncomment stack trace to debug.
                  */
-                ioe.printStackTrace();
+                //ioe.printStackTrace();
             } else {
                 ioe.printStackTrace();
             }

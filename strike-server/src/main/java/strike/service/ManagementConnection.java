@@ -49,7 +49,7 @@ public class ManagementConnection implements Runnable {
                 Message msg = messageQueue.take();
 
                 if (!msg.isFromClient() && msg.getMessage().equals("exit")) {
-                    logger.trace("EOF");
+                    //logger.trace("EOF");
                     break;
                 }
 

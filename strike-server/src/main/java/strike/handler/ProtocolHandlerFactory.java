@@ -131,12 +131,12 @@ public class ProtocolHandlerFactory {
             return new NotifyUserSessionHandler(jsonMessage, connection);
         }
 
-        if (type.equalsIgnoreCase(Protocol.alive.toString())) {
-            return new AliveHeartbeatHandler(jsonMessage, connection);
-        }
-
         if (type.equalsIgnoreCase(Protocol.serverup.toString())) {
             return new ServerUpProtocolHandler(jsonMessage, connection);
+        }
+
+        if (type.equalsIgnoreCase(Protocol.notifyserverdown.toString())) {
+            return new NotifyServerDownProtocolHandler(jsonMessage, connection);
         }
 
         return new BlackHoleHandler();

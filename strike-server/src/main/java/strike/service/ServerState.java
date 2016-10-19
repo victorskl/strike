@@ -19,7 +19,7 @@ public class ServerState {
 
     private static ServerState instance;
 
-    private ConcurrentMap<String, Date> aliveMap;
+    private ConcurrentMap<String, Integer> aliveMap;
     private ConcurrentMap<String, UserSession> localUserSessions;
     private ConcurrentMap<String, RemoteUserSession> remoteUserSessions;
     private ConcurrentMap<String, LocalChatRoomInfo> localChatRooms;
@@ -109,9 +109,13 @@ public class ServerState {
 */
     }
 
+    public synchronized void removeServer(String serverId) {
+        serverInfoMap.remove(serverId);
+    }
+
     // thread safe
 
-    public ConcurrentMap<String, Date> getAliveMap() {
+    public ConcurrentMap<String, Integer> getAliveMap() {
         return aliveMap;
     }
 
@@ -157,6 +161,24 @@ public class ServerState {
 
     public boolean isStopRunning() {
         return stopRunning.get();
+    }
+
+    public void removeRemoteChatRoomsByServerId(String serverId) {
+        for (String entry : remoteChatRooms.keySet()) {
+            RemoteChatRoomInfo remoteChatRoomInfo = remoteChatRooms.get(entry);
+            if (remoteChatRoomInfo.getManagingServer().equalsIgnoreCase(serverId)) {
+                remoteChatRooms.remove(entry);
+            }
+        }
+    }
+
+    public void removeRemoteUserSessionsByServerId(String serverId) {
+        for (String entry : remoteUserSessions.keySet()) {
+            RemoteUserSession remoteUserSession = remoteUserSessions.get(entry);
+            if (remoteUserSession.getManagingServerId().equalsIgnoreCase(serverId)) {
+                remoteUserSessions.remove(entry);
+            }
+        }
     }
 
     // synchronized

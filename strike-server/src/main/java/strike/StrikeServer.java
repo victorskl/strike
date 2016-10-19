@@ -26,7 +26,6 @@ import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.heartbeat.AliveJob;
-import strike.heartbeat.VoteOutServerJob;
 import strike.model.LocalChatRoomInfo;
 import strike.model.RemoteChatRoomInfo;
 import strike.model.ServerInfo;
@@ -112,7 +111,7 @@ public class StrikeServer {
             //addMainHallsStatically();
             syncChatRooms();
 
-            //startHeartBeat();
+            startHeartBeat();
 
             // Shutdown hook
             Runtime.getRuntime().addShutdownHook(new ShutdownService(servicePool));
@@ -128,6 +127,8 @@ public class StrikeServer {
             JobDetail aliveJob = JobBuilder.newJob(AliveJob.class)
                     .withIdentity("AliveJob", "group1").build();
 
+            aliveJob.getJobDataMap().put("aliveErrorFactor", systemProperties.getInt("alive.error.factor"));
+
             Trigger aliveTrigger = TriggerBuilder
                     .newTrigger()
                     .withIdentity("AliveJobTrigger", "group1")
@@ -136,21 +137,9 @@ public class StrikeServer {
                                     .withIntervalInSeconds(systemProperties.getInt("alive.interval")).repeatForever())
                     .build();
 
-            JobDetail voteJob = JobBuilder.newJob(VoteOutServerJob.class)
-                    .withIdentity("VoteJob", "group1").build();
-
-            Trigger voteTrigger = TriggerBuilder
-                    .newTrigger()
-                    .withIdentity("VoteJobTrigger", "group1")
-                    .withSchedule(
-                            SimpleScheduleBuilder.simpleSchedule()
-                                    .withIntervalInSeconds(systemProperties.getInt("vote.interval")).repeatForever())
-                    .build();
-
             Scheduler scheduler = new StdSchedulerFactory().getScheduler();
             scheduler.start();
             scheduler.scheduleJob(aliveJob, aliveTrigger);
-            scheduler.scheduleJob(voteJob, voteTrigger);
 
         } catch (SchedulerException e) {
             e.printStackTrace();
@@ -224,11 +213,12 @@ public class StrikeServer {
 
             if (serverState.isOnline(server)) {
                 // promote my main hall
-                //peerClient.commPeer(server, messageBuilder.lockRoom(this.mainHall));
-                //peerClient.commPeer(server, messageBuilder.releaseRoom(this.mainHall, "true"));
+                peerClient.commPeer(server, messageBuilder.serverUpMessage());
+                peerClient.commPeer(server, messageBuilder.lockRoom(this.mainHall));
+                peerClient.commPeer(server, messageBuilder.releaseRoom(this.mainHall, "true"));
                 //TODO serverUpMessage to send even earlier?
-                String[] messages = {messageBuilder.serverUpMessage(), messageBuilder.lockRoom(this.mainHall), messageBuilder.releaseRoom(this.mainHall, "true")};
-                peerClient.commPeer(server, messages);
+                //String[] messages = {messageBuilder.serverUpMessage(), messageBuilder.lockRoom(this.mainHall), messageBuilder.releaseRoom(this.mainHall, "true")};
+                //peerClient.commPeer(server, messages);
 
                 // accept theirs
                 String resp = peerClient.commServerSingleResp(server, messageBuilder.listRoomsClient());
