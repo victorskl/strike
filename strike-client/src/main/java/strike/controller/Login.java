@@ -7,14 +7,13 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.Pane;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import javafx.scene.layout.Pane;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -97,10 +96,13 @@ public class Login {
         // Try to create the SSL socket we are going to use for all communication.
         sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 
+        String localhost = systemProperties.getString("client.seed.server");
+        int port = systemProperties.getInt("client.seed.server.port");
+
         try {
             // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // This server needs to be running or else we cannot get the server list!
-            socket = (SSLSocket) sslsocketfactory.createSocket("115.146.90.37", 4440);
+            socket = (SSLSocket) sslsocketfactory.createSocket(localhost, port);
 
             // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // To run locally, use this socket instead!
