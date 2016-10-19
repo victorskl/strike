@@ -45,7 +45,7 @@
                <font>
                   <Font name="System Bold" size="16.0" />
                </font></Button>
-            <ComboBox maxWidth="366.0" prefHeight="40.0" prefWidth="150.0" promptText="Server" styleClass="serverlist" stylesheets="@style.css" GridPane.rowIndex="2" />
+            <ComboBox fx:id="idServer" maxWidth="366.0" prefHeight="40.0" prefWidth="150.0" promptText="Server" styleClass="serverlist" stylesheets="@style.css" GridPane.rowIndex="2" />
             </children>
         </GridPane>
         <Label layoutX="88.0" layoutY="51.0" prefHeight="158.0" prefWidth="299.0" text="Welcome to Strike" textAlignment="CENTER" wrapText="true">

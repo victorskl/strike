@@ -1,5 +1,7 @@
 package strike.controller;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -8,10 +10,12 @@ import javafx.scene.control.*;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import javafx.scene.layout.Pane;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -21,10 +25,21 @@ import strike.common.model.Protocol;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Login {
+
+    private class ServerInfo {
+        public String address;
+        public Integer port;
+        public String serverID;
+
+        public ServerInfo(String address, Integer port, String serverID) {
+            this.address = address;
+            this.port = port;
+            this.serverID = serverID;
+        }
+    }
 
     private StrikeClient strikeClient;
 
@@ -33,6 +48,10 @@ public class Login {
     private List<String> messages;
     private JSONParser parser;
     private SSLSocket socket = null;
+
+    HashMap<String, ServerInfo> serverInformationMap = new HashMap<>();
+
+    ObservableList<String> listOfServers = FXCollections.observableArrayList();
 
     public void setStrikeClient(StrikeClient strikeClient) {
         this.strikeClient = strikeClient;
@@ -46,6 +65,9 @@ public class Login {
 
     @FXML
     private ToggleGroup idAccountType;
+
+    @FXML
+    private ComboBox<String> idServer;
 
     @FXML
     private void initialize() {
@@ -72,7 +94,55 @@ public class Login {
         System.setProperty("javax.net.ssl.trustStore", systemProperties.getString("keystore"));
         //System.setProperty("javax.net.debug","all");
 
+        // Try to create the SSL socket we are going to use for all communication.
         sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+
+        try {
+            socket = (SSLSocket) sslsocketfactory.createSocket("localhost", 4444); //s1  // Need to change this to the designated serverlist server.
+            socket.startHandshake();
+        }
+        catch(IOException e) {
+            logger.log(Level.FATAL, "Unable to create SSL socket.");
+            System.exit(0);
+        }
+
+
+        JSONObject message = createServerListMessage();
+        JSONObject response = perform(socket, message); // (serverlist, not auth).
+        populateToggleGroup(response);
+
+        try {
+            socket.close();
+        }
+        catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void populateToggleGroup(JSONObject serverList) {
+
+        JSONArray servers = (JSONArray)serverList.get("servers");
+
+        Iterator i = servers.iterator();
+
+        while(i.hasNext()) {
+            JSONObject server = (JSONObject)i.next();
+
+            String serverID = (String)server.get("serverid");
+            Number port = (Number)server.get("port");
+            String address = (String)server.get("address");
+
+            serverInformationMap.put(serverID, new ServerInfo(address, port.intValue(), serverID));
+        }
+
+        ArrayList<String> sorted = new ArrayList<>();
+        listOfServers.addAll(serverInformationMap.keySet());
+
+        Collections.sort(listOfServers, (String o1, String o2) -> {
+                return o1.compareTo(o2);
+        });
+
+        idServer.setItems(listOfServers);
     }
 
     @FXML
@@ -87,17 +157,30 @@ public class Login {
         String accType = ((RadioButton) idAccountType.getSelectedToggle()).getText();
         System.out.println(accType);
 
+        String selectedServerID = idServer.getSelectionModel().getSelectedItem();
+        ServerInfo info = serverInformationMap.get(selectedServerID);
+        System.err.println(info.toString());
+
+        try {
+            socket = (SSLSocket) sslsocketfactory.createSocket(info.address, info.port);
+            socket.startHandshake();
+        }
+        catch(IOException e) {
+            logger.log(Level.FATAL, "Unable to create SSL socket for authentication.");
+            System.exit(0);
+        }
+
         // try to perform authorisation:
         // Need to update the port to the server port chosen from the server list.
         JSONObject authMessage = createAuthMessage(username, password, false);
-        JSONObject response = performAuth(4444, authMessage);
+        JSONObject response = perform(socket, authMessage);
         System.out.println(response.toJSONString());
+
 
 
         if(response.get("success").equals("true")) {
             // Show the screen name prompt.
             try {
-
                 // Get the screenname.
                 FXMLLoader loader = new FXMLLoader();
                 loader.setLocation(this.strikeClient.getClass().getResource("view/ScreenName.fxml"));
@@ -108,7 +191,7 @@ public class Login {
                 strikeClient.getPrimaryStage().setScene(scene);
                 strikeClient.getPrimaryStage().show();
 
-                // Pass the client to the screen name widnow.
+                // Pass the client to the screen name window.
                 ScreenNameController controller = loader.getController();
                 controller.setStrikeClient(this.strikeClient);
                 controller.setAuthenticatedSocket(this.socket);
@@ -126,12 +209,10 @@ public class Login {
     }
 
     // Returns the response from the authorisation.
-    public JSONObject performAuth(int port, JSONObject authMessage) {
+    public JSONObject perform(SSLSocket socket, JSONObject authMessage) {
         JSONObject response = null;
 
         try {
-            socket = (SSLSocket) sslsocketfactory.createSocket("localhost", port); // Need to change this to the designated server.
-
             for (String s : socket.getSupportedProtocols()) {
                 System.out.println(s);
             }
@@ -157,7 +238,12 @@ public class Login {
                 e.printStackTrace();
             }
 
+            //writer.close();
+            //reader.close();
+
         } catch (IOException ioe) {
+            System.err.println("IO Exception somewhere.");
+            System.err.println(ioe.getMessage());
             System.out.println(ioe.getCause());
         }
 
@@ -172,14 +258,12 @@ public class Login {
         jj.put(Protocol.password.toString(), password); // define in shiro.ini
         jj.put(Protocol.rememberme.toString(), String.format("%s", remember)); // true or false or not provide
 
-        //messages.add(jj.toJSONString());
-
         return jj;
     }
 
     private JSONObject createServerListMessage() {
         JSONObject request = new JSONObject();
-        request.put(Protocol.type.toString(), Protocol.serverlist.toString());
+        request.put(Protocol.type.toString(), Protocol.listserver.toString());
         return request;
     }
 
