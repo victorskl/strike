@@ -1,16 +1,15 @@
 package strike.service;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import strike.model.*;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +29,7 @@ public class ServerState {
     private Set<String> lockedIdentities;
     private Set<String> lockedRoomIdentities;
 
+    private ConcurrentMap<String, ServerInfo> serverInfoMap;
     private List<ServerInfo> serverInfoList;
     private ServerInfo serverInfo;
 
@@ -44,6 +44,7 @@ public class ServerState {
         remoteChatRooms = new ConcurrentHashMap<>();
         lockedIdentities = new HashSet<>();
         lockedRoomIdentities = new HashSet<>();
+        serverInfoMap = new ConcurrentHashMap<>();
     }
 
     public static synchronized ServerState getInstance() {
@@ -53,18 +54,24 @@ public class ServerState {
         return instance;
     }
 
-    public void initServerState(String serverId) {
+    public synchronized void initServerState(String serverId) {
+        serverInfo = serverInfoMap.get(serverId);
+/*
         serverInfo = serverInfoList.stream()
                 .filter(e -> e.getServerId().equalsIgnoreCase(serverId))
                 .findFirst()
                 .get();
+*/
     }
 
     public synchronized ServerInfo getServerInfoById(String serverId) {
+        return serverInfoMap.get(serverId);
+/*
         return serverInfoList.stream()
                 .filter(e -> e.getServerId().equalsIgnoreCase(serverId))
                 .findFirst()
                 .get();
+*/
     }
 
     public synchronized ServerInfo getServerInfo() {
@@ -72,11 +79,34 @@ public class ServerState {
     }
 
     public synchronized List<ServerInfo> getServerInfoList() {
-        return serverInfoList;
+        //return serverInfoList;
+        return new ArrayList<>(serverInfoMap.values());
     }
 
     public synchronized void setServerInfoList(List<ServerInfo> serverInfoList) {
-        this.serverInfoList = serverInfoList;
+        //this.serverInfoList = serverInfoList;
+        for (ServerInfo serverInfo : serverInfoList) {
+            serverInfoMap.put(serverInfo.getServerId(), serverInfo);
+        }
+    }
+
+    public synchronized void addServer(ServerInfo serverInfo) {
+        serverInfoMap.put(serverInfo.getServerId(), serverInfo);
+
+
+/*
+        for (int i = 0; i < serverInfoList.size(); i++) {
+            ServerInfo s = serverInfoList.get(i);
+            if (s.getServerId().equalsIgnoreCase(serverInfo.getServerId())) {
+                logger.info("Server " + serverInfo.getServerId() + " already exist.");
+            } else {
+                if (!Objects.equals(s.getPort(), serverInfo.getPort())) {
+                    logger.info("Adding server " + serverInfo.getServerId() + " to server list.");
+                    serverInfoList.add(serverInfo);
+                }
+            }
+        }
+*/
     }
 
     // thread safe
@@ -176,6 +206,7 @@ public class ServerState {
             SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
             final SSLSocket shortKet = (SSLSocket) sslsocketfactory.createSocket();
             shortKet.connect(address, timeOut);
+            shortKet.startHandshake();
             shortKet.close();
         } catch (IOException e) {
             //e.printStackTrace();
@@ -183,4 +214,6 @@ public class ServerState {
         }
         return online;
     }
+
+    private static final Logger logger = LogManager.getLogger(ServerState.class);
 }

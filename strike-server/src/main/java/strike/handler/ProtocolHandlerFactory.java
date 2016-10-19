@@ -135,6 +135,10 @@ public class ProtocolHandlerFactory {
             return new AliveHeartbeatHandler(jsonMessage, connection);
         }
 
+        if (type.equalsIgnoreCase(Protocol.serverup.toString())) {
+            return new ServerUpProtocolHandler(jsonMessage, connection);
+        }
+
         return new BlackHoleHandler();
     }
 

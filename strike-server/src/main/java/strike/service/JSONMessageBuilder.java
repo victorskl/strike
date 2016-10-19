@@ -274,4 +274,14 @@ public class JSONMessageBuilder {
         jj.put(Protocol.serverid.toString(), serverInfo.getServerId());
         return jj.toJSONString();
     }
+
+    public String serverUpMessage() {
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.serverup.toString());
+        jj.put(Protocol.serverid.toString(), serverInfo.getServerId());
+        jj.put(Protocol.address.toString(), serverInfo.getAddress());
+        jj.put(Protocol.port.toString(), serverInfo.getPort());
+        jj.put(Protocol.managementport.toString(), serverInfo.getManagementPort());
+        return jj.toJSONString();
+    }
 }

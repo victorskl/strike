@@ -53,7 +53,7 @@ public class MessageReader implements Runnable {
                  * But the connection is working either way. Put it as known issue for now.
                  * Otherwise uncomment stack trace to debug.
                  */
-                //ioe.printStackTrace();
+                ioe.printStackTrace();
             } else {
                 ioe.printStackTrace();
             }

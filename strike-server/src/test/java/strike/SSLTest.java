@@ -144,6 +144,14 @@ public class SSLTest {
     }
 
     @Test @Ignore
+    public void listRoomTest() {
+        messages.clear();
+        makeLoginMessage("guest", "guest");
+        makeListRoomMessage();
+        testSSLClient(4444);
+    }
+
+    @Test @Ignore
     public void routeServerTest() throws ParseException {
 
         try {

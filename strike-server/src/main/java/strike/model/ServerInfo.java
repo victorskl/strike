@@ -2,6 +2,8 @@ package strike.model;
 
 import com.opencsv.bean.CsvBindByPosition;
 
+import java.util.Objects;
+
 public class ServerInfo {
 
     @CsvBindByPosition(position = 0)
@@ -56,5 +58,18 @@ public class ServerInfo {
 
     public void setManagementPort(Integer managementPort) {
         this.managementPort = managementPort;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        boolean result = false;
+        if (other instanceof ServerInfo) {
+            ServerInfo that = (ServerInfo) other;
+            result = (Objects.equals(this.getServerId(), that.getServerId())
+                    && Objects.equals(this.getPort(), that.getPort())
+                    && Objects.equals(this.getManagementPort(), that.getManagementPort())
+            );
+        }
+        return result;
     }
 }

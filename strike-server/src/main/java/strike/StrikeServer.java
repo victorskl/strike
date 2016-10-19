@@ -226,7 +226,8 @@ public class StrikeServer {
                 // promote my main hall
                 //peerClient.commPeer(server, messageBuilder.lockRoom(this.mainHall));
                 //peerClient.commPeer(server, messageBuilder.releaseRoom(this.mainHall, "true"));
-                String[] messages = {messageBuilder.lockRoom(this.mainHall), messageBuilder.releaseRoom(this.mainHall, "true")};
+                //TODO serverUpMessage to send even earlier?
+                String[] messages = {messageBuilder.serverUpMessage(), messageBuilder.lockRoom(this.mainHall), messageBuilder.releaseRoom(this.mainHall, "true")};
                 peerClient.commPeer(server, messages);
 
                 // accept theirs
