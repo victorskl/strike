@@ -98,7 +98,14 @@ public class Login {
         sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 
         try {
-            socket = (SSLSocket) sslsocketfactory.createSocket("localhost", 4444); //s1  // Need to change this to the designated serverlist server.
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // This server needs to be running or else we cannot get the server list!
+            socket = (SSLSocket) sslsocketfactory.createSocket("115.146.90.37", 4440);
+
+            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // To run locally, use this socket instead!
+            // socket = (SSLSocket) sslsocketfactory.createSocket("localhost", 4444);
+
             socket.startHandshake();
         }
         catch(IOException e) {
