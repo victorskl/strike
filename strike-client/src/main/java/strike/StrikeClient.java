@@ -120,6 +120,7 @@ public class StrikeClient extends Application {
         super.stop();
 
         if(client.isRunning()) {
+            System.err.println("Stopping");
             client.SendMessage("#quit");
         }
     }

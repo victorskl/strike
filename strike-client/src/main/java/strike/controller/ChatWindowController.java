@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import strike.StrikeClient;
 
+import javax.net.ssl.SSLSocket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,9 +24,15 @@ import java.util.Set;
 public class ChatWindowController implements Client.IMessageReceiveHandler, Client.IRoomChangeHandler, Client.IClientListUpdateHandler {
 
     private StrikeClient strikeClient;
+    private SSLSocket authenticatedSocket;
 
     public void setStrikeClient(StrikeClient strikeClient) {
         this.strikeClient = strikeClient;
+
+        StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
+        StackTraceElement e = stacktrace[2];//maybe this number needs to be corrected
+        String methodName = e.getMethodName();
+        System.err.println(methodName);
 
         // Update the text when we get a new message from a client.
         strikeClient.getClient().onMessageReceive("message", this);
@@ -34,6 +41,10 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
         strikeClient.getClient().onRoomChange("change", this);
 
         strikeClient.getClient().onClientListUpdate("joinleave", this);
+    }
+
+    public void setAuthenticatedSocket(SSLSocket authenticatedSocket) {
+        this.authenticatedSocket = authenticatedSocket;
     }
 
     @FXML
@@ -160,6 +171,7 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
     public void roomChange(String from, String to) {
         // Need to call runLater, as it will schedule this on the main JavaFX Application Thread
         // Can only update UI elements from the main thread.
+
         Platform.runLater(() -> {
 
             String message;
@@ -201,6 +213,19 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
         Platform.runLater(() -> {
             // Update the main chat window.
             Text text = new Text(String.format("%s has left the room!\n", userid));
+            text.setStyle("-fx-font-weight: bold");
+            idChatWindowContents.getChildren().add(text);
+
+            // Update the clients list.
+            removeClient(userid);
+        });
+    }
+
+    @Override
+    public void userQuit(String userid) {
+        Platform.runLater(() -> {
+            // Update the main chat window.
+            Text text = new Text(String.format("%s has quit the server!\n", userid));
             text.setStyle("-fx-font-weight: bold");
             idChatWindowContents.getChildren().add(text);
 

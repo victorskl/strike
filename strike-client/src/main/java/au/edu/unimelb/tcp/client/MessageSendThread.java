@@ -62,6 +62,7 @@ public class MessageSendThread implements Runnable {
 	
 	// send command and check validity
 	public void MessageSend(SSLSocket socket, String msg) throws IOException {
+
 		JSONObject sendToServer = new JSONObject();
 		String []array = msg.split(" ");
 		if(!array[0].startsWith("#")) {

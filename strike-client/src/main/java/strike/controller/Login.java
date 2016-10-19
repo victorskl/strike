@@ -16,7 +16,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import strike.StrikeClient;
-//import strike.model.Protocol;
+import strike.common.model.Protocol;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -73,7 +73,6 @@ public class Login {
         //System.setProperty("javax.net.debug","all");
 
         sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-
     }
 
     @FXML
@@ -88,21 +87,10 @@ public class Login {
         String accType = ((RadioButton) idAccountType.getSelectedToggle()).getText();
         System.out.println(accType);
 
-        /*
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.initOwner(strikeClient.getPrimaryStage());
-        alert.setTitle("Login");
-        alert.setHeaderText("Your Login Info");
-        alert.setContentText("Username: " + username + ", Password: " + password + ", Account Type: " + accType);
-        alert.showAndWait();
-        */
-
-
-
         // try to perform authorisation:
         // Need to update the port to the server port chosen from the server list.
-        createAuthMessage(username, password, false);
-        JSONObject response = performAuth(4444);
+        JSONObject authMessage = createAuthMessage(username, password, false);
+        JSONObject response = performAuth(4444, authMessage);
         System.out.println(response.toJSONString());
 
 
@@ -123,6 +111,7 @@ public class Login {
                 // Pass the client to the screen name widnow.
                 ScreenNameController controller = loader.getController();
                 controller.setStrikeClient(this.strikeClient);
+                controller.setAuthenticatedSocket(this.socket);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -134,84 +123,65 @@ public class Login {
             alert.setHeaderText("Unable to authenticate your credentials. Please try again.");
             alert.showAndWait();
         }
-
     }
 
-
     // Returns the response from the authorisation.
-    public JSONObject performAuth(int port) {
+    public JSONObject performAuth(int port, JSONObject authMessage) {
         JSONObject response = null;
-        System.out.println("Im here.");
 
         try {
-            socket = (SSLSocket) sslsocketfactory.createSocket("localhost", port);
+            socket = (SSLSocket) sslsocketfactory.createSocket("localhost", port); // Need to change this to the designated server.
 
             for (String s : socket.getSupportedProtocols()) {
                 System.out.println(s);
             }
             System.out.println();
 
+            // Write the message out.
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
-            for (String message : messages) {
-                writer.write(message + "\n");
-                writer.flush();
-                System.out.println("Sending : " + message);
-            }
 
+            writer.write(authMessage+ "\n");
+            writer.flush();
+            System.out.println("Sending : " + authMessage);
+
+            // Wait for the response.
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
 
-            for (int i = 0; i< messages.size(); i++) {
-                String resp = reader.readLine();
+            String resp = reader.readLine();
 
-                try {
-                    JSONObject jj = (JSONObject) parser.parse(resp);
-                    response = jj;
-                    System.out.println("Response : " + jj.toJSONString());
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
+            try {
+                JSONObject jj = (JSONObject) parser.parse(resp);
+                response = jj;
+                System.out.println("Response : " + jj.toJSONString());
+            } catch (ParseException e) {
+                e.printStackTrace();
             }
-
-            writer.close();
-            reader.close();
-            socket.close();
 
         } catch (IOException ioe) {
             System.out.println(ioe.getCause());
-        } finally {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
         return response;
     }
 
-    private void createAuthMessage(String username, String password, boolean remember) {
-
+    private JSONObject createAuthMessage(String username, String password, boolean remember) {
         // {"type" : "authenticate", "username" : "ray@example.com", "password":"cheese", "rememberme":"true"}
-
-        /*
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.authenticate.toString());
         jj.put(Protocol.username.toString(), username); // define in shiro.ini
         jj.put(Protocol.password.toString(), password); // define in shiro.ini
-        jj.put(Protocol.rememberme.toString(), remember); // true or false or not provide
-        messages.add(jj.toJSONString());
-        */
+        jj.put(Protocol.rememberme.toString(), String.format("%s", remember)); // true or false or not provide
 
-        JSONObject jj = new JSONObject();
-        jj.put("type", "authenticate");
-        jj.put("username", username); // define in shiro.ini
-        jj.put("password", password); // define in shiro.ini
-        jj.put("rememberme", String.format("%s", remember)); // true or false or not provide
-        messages.add(jj.toJSONString());
+        //messages.add(jj.toJSONString());
+
+        return jj;
     }
 
+    private JSONObject createServerListMessage() {
+        JSONObject request = new JSONObject();
+        request.put(Protocol.type.toString(), Protocol.serverlist.toString());
+        return request;
+    }
 
     private static final Logger logger = LogManager.getLogger(Login.class);
 }

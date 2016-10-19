@@ -67,7 +67,9 @@ public class MessageReceiveThread implements Runnable {
 	public void MessageReceive(SSLSocket socket, JSONObject message)
 			throws IOException, ParseException {
 		String type = (String) message.get("type");
-		
+
+		System.out.println(message.toJSONString());
+
 		// server reply of #newidentity
 		if (type.equals("newidentity")) {
 			boolean approved = Boolean.parseBoolean((String) message.get("approved"));
@@ -75,9 +77,14 @@ public class MessageReceiveThread implements Runnable {
 			// terminate program if failed
 			if (!approved) {
 				System.out.println(state.getIdentity() + " already in use.");
-				socket.close();
-				System.exit(1);
+				//socket.close();
+				client.userWasDenied();
+				// System.exit(1);
 			}
+			else {
+				client.userWasApproved();
+			}
+
 			return;
 		}
 		
@@ -104,12 +111,12 @@ public class MessageReceiveThread implements Runnable {
 				if (message.get("identity").equals(state.getIdentity())) {
 					String userid = (String) message.get("identity");
 					System.out.println(message.get("identity") + " has quit!");
-					this.client.userDidLeave(userid);
+					this.client.userDidQuit(userid);
 					in.close();
 					System.exit(1);
 				} else {
 					String userid = (String) message.get("identity");
-					this.client.userDidLeave(userid);
+					this.client.userDidQuit(userid);
 					System.out.println(message.get("identity") + " has quit!");
 					System.out.print("[" + state.getRoomId() + "] " + state.getIdentity() + "> ");
 				}

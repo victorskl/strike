@@ -33,22 +33,23 @@ public class Client {
         this.values = values;
     }
 
-	public void run() throws IOException, ParseException {
+	public void run(String screenName, SSLSocket authenticatedSocket) throws IOException, ParseException {
 
 		SSLSocket socket = null;
-
+		hasStarted = true;
 
 		try {
 			//load command line args
 			//ComLineValues values = new ComLineValues();
 			//CmdLineParser parser = new CmdLineParser(values);
             //parser.parseArgument(args);
+
             String hostname = values.getHost();
-            identity = values.getIdeneity();
+            identity = screenName;
             int port = values.getPort();
             debug = values.isDebug();
-            SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-            socket = (SSLSocket) sslsocketfactory.createSocket(hostname, port);
+
+			socket = authenticatedSocket;
 
             State state = new State(identity, "");
 			
@@ -83,6 +84,10 @@ public class Client {
 		SendMessage("#who");
 	}
 
+	public void attemptLoginWith(String screenName){
+		SendMessage("#newidentity " + screenName);
+	}
+
 	public boolean isRunning() {
 		return this.hasStarted;
 	}
@@ -92,6 +97,37 @@ public class Client {
 	}
 
 	// Events which we can hook into for the GUI.
+
+	// Client tries to create a new identity on the server.
+	// ####################################################
+	public interface INewUserHandler {
+		void userWasApproved();
+		void userWasDenied();
+	}
+
+	public HashMap<String, INewUserHandler> newUserHandlers = new HashMap<>();
+
+	// This is called by the GUI code to register for the event.
+
+	public void onUserApprovalOrDeny(String handlerID, INewUserHandler handler) {
+		this.newUserHandlers.put(handlerID, handler);
+	}
+
+	// This is called by the client.
+	public void userWasApproved() {
+		for (String handlerID : this.newUserHandlers.keySet()) {
+			INewUserHandler handler = this.newUserHandlers.get(handlerID);
+			handler.userWasApproved();
+		}
+	}
+
+	public void userWasDenied() {
+		for (String handlerID : this.newUserHandlers.keySet()) {
+			INewUserHandler handler = this.newUserHandlers.get(handlerID);
+			handler.userWasDenied();
+		}
+	}
+
 
 	// Message received event.
 	// #######################
@@ -124,11 +160,14 @@ public class Client {
 
 	// This is called by the GUI code to register for the event.
 	public void onRoomChange(String handlerID, IRoomChangeHandler handler) {
+		System.err.println("Registering for room change.");
 		this.roomChangeHandlers.put(handlerID, handler);
 	}
 
 	// This is called by the client.
 	public void didChangeRoom(String from, String to) {
+
+		System.err.println("Did change room, will call: " + this.roomChangeHandlers.keySet().size());
 		for (String handlerID : this.roomChangeHandlers.keySet()) {
 			IRoomChangeHandler handler = this.roomChangeHandlers.get(handlerID);
 			handler.roomChange(from, to);
@@ -141,6 +180,7 @@ public class Client {
 	public interface IClientListUpdateHandler {
 		void userJoined(String userid);
 		void userLeft(String userid);
+		void userQuit(String userid);
 		void receiveInitialClientList(Set<String> clients);
 	}
 	public HashMap<String, IClientListUpdateHandler> clientListUpdateHandlers = new HashMap<>();
@@ -162,6 +202,13 @@ public class Client {
 		for (String handlerID : this.clientListUpdateHandlers.keySet()) {
 			IClientListUpdateHandler handler = this.clientListUpdateHandlers.get(handlerID);
 			handler.userLeft(userid);
+		}
+	}
+
+	public void userDidQuit(String userid) {
+		for (String handlerID : this.clientListUpdateHandlers.keySet()) {
+			IClientListUpdateHandler handler = this.clientListUpdateHandlers.get(handlerID);
+			handler.userQuit(userid);
 		}
 	}
 
