@@ -1,20 +1,17 @@
 package strike;
 
-import au.edu.unimelb.tcp.client.Client;
-import au.edu.unimelb.tcp.client.ComLineValues;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
-import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.kohsuke.args4j.CmdLineParser;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import strike.controller.Login;
+import strike.service.ConnectionService;
 
 import java.io.IOException;
 
@@ -22,55 +19,28 @@ public class StrikeClient extends Application {
 
     private Stage primaryStage;
     private BorderPane rootLayout;
-    private Client client;
-
-    private Configuration systemProperties;
-
-    private static final Logger logger = LogManager.getLogger(StrikeClient.class);
 
     @Override
     public void start(Stage primaryStage) throws Exception {
 
-        // This is temporary so that the GUI will at least load.
-        String[] args = new String[6];
-        args[0] = "-p";
-        args[1] = "4444";
-        args[2] = "-i";
-        args[3] = "user";
-        args[4] = "-h";
-        args[5] = "localhost";
-
-        // String[] args = getParameters().getRaw().toArray(new String[0]);
-
-        ComLineValues values = new ComLineValues();
-        CmdLineParser cmdLineParser = new CmdLineParser(values);
-
-        logger.info("Parsing args...");
-        cmdLineParser.parseArgument(args);
-
-        logger.info("option: -c " + values.getSystemPropertiesFile().toString());
-        logger.info("Reading system properties file: " + values.getSystemPropertiesFile().toString());
-        try {
-            Configurations configs = new Configurations();
-            systemProperties = configs.properties(values.getSystemPropertiesFile());
-        } catch (ConfigurationException e) {
-            e.printStackTrace();
-        }
-        logger.info("Setting up SSL system environment...");
-        System.setProperty("javax.net.ssl.trustStore", systemProperties.getString("keystore"));
-        //System.setProperty("javax.net.debug","all"); // uncomment to debug SSL, and comment it back there after
-
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle("Strike Chat Client");
-
+        logger.info("Starting client...");
+        updateLogger();
         initRootLayout();
 
         boolean userNotLoggedIn = false; // TODO dummy login state
         if (!userNotLoggedIn) {
             showLogin();
         }
+    }
 
-        client = new Client(values);
+    private void updateLogger() {
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        org.apache.logging.log4j.core.config.Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig("strike");
+
+        logger.debug(String.format("Client is running in %s mode", loggerConfig.getLevel().toString()));
     }
 
     private void initRootLayout() {
@@ -109,19 +79,22 @@ public class StrikeClient extends Application {
     public Stage getPrimaryStage() {
         return primaryStage;
     }
-    public Client getClient() {return client;}
+
+    @Override
+    public void stop() {
+        try {
+            logger.info("Initiating shutdown sequence...");
+            ConnectionService.getInstance().stop();
+            super.stop();
+            logger.info("Bye!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
         launch(args);
     }
 
-    @Override
-    public void stop() throws Exception {
-        super.stop();
-
-        if(client.isRunning()) {
-            System.err.println("Stopping");
-            client.SendMessage("#quit");
-        }
-    }
+    private static final Logger logger = LogManager.getLogger(StrikeClient.class);
 }

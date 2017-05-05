@@ -1,6 +1,7 @@
 package strike.controller;
 
-import au.edu.unimelb.tcp.client.Client;
+import com.google.common.base.Strings;
+import com.google.common.eventbus.Subscribe;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -9,123 +10,119 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONObject;
 import strike.StrikeClient;
+import strike.handler.ProtocolHandlerFactory;
+import strike.service.ClientState;
+import strike.service.ConnectionService;
+import strike.service.JSONMessageBuilder;
 
-import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 
-/**
- * Created by Phillip on 16/10/2016.
- */
+public class ScreenNameController {
 
-public class ScreenNameController implements Client.INewUserHandler {
-
+    // TODO find out a better way to do this dependency injection
     private StrikeClient strikeClient;
-    private SSLSocket authenticatedSocket;
-    AnchorPane chatWindow = null;
-
-    private boolean chatWindowLoaded = false;
 
     public void setStrikeClient(StrikeClient strikeClient) {
-
         this.strikeClient = strikeClient;
-        this.strikeClient.getClient().onUserApprovalOrDeny("approval", this);
     }
 
-    public void setAuthenticatedSocket(SSLSocket authenticatedSocket) {
-        this.authenticatedSocket = authenticatedSocket;
-    }
+    // -----
+
+    private AnchorPane chatWindow = null;
+    private boolean chatWindowLoaded = false;
 
     @FXML
     private TextField idScreenName;
+    private String screenName;
 
     @FXML
     private void initialize() {
-        /**
-         * Initializes the controller class. This method is automatically called
-         * after the fxml file has been loaded.
-         */
-        System.out.println("ScreenNameController Init...");
+        logger.info("ScreenNameController Init...");
     }
 
     @FXML
     public void login(ActionEvent actionEvent) {
 
-        String screenName = idScreenName.getText();
+        screenName = idScreenName.getText();
 
-        if(screenName.equals("")) {
+        if (Strings.isNullOrEmpty(screenName)) {
+
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Empty Screen Name");
             alert.setHeaderText("Please enter a screen name. It cannot be blank.");
             alert.showAndWait();
-        }
-        else {
 
-            //this.strikeClient.getClient().setIdentity(screenName);
+        } else {
+
             try {
 
-                if(!chatWindowLoaded) {
+                if (!chatWindowLoaded) {
                     loadChatWindow();
                 }
-                // Start the client.
-                if(!this.strikeClient.getClient().isRunning()) {
-                    this.strikeClient.getClient().run(screenName, authenticatedSocket);
-                }
-                else {
-                    this.strikeClient.getClient().attemptLoginWith(screenName);
-                }
-            }
-            catch(Exception e) {
-                    e.printStackTrace();
+
+                JSONObject jsonMessage = JSONMessageBuilder.getInstance().getNewIdentityRequest(screenName);
+                ConnectionService connectionService = ConnectionService.getInstance();
+                connectionService.getEventBus().register(this);
+                ProtocolHandlerFactory.newSendHandler(jsonMessage).handle();
+
+                // request state, this may reset if server disapprove at NewIdentityReceiveHandler
+                ClientState clientState = ClientState.getInstance();
+                clientState.setIdentity(screenName);
+                clientState.setRoomId("");
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
 
-    @Override
-    public void userWasApproved() {
-        // Show the chat window if our username was approved.
-
+    @Subscribe
+    public void approved(Boolean approved) {
         Platform.runLater(() -> {
-            try {
-                // Show the scene containing the root layout.
-                Scene scene = new Scene(chatWindow);
-                strikeClient.getPrimaryStage().setScene(scene);
-                strikeClient.getPrimaryStage().show();
-            }
-            catch(Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
+            if (approved) {
+                try {
+                    Scene scene = new Scene(chatWindow);
+                    strikeClient.getPrimaryStage().setScene(scene);
+                    strikeClient.getPrimaryStage().show();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-    @Override
-    public void userWasDenied() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Screen Name Denied");
-            alert.setHeaderText("Your username has been denied. It is probably already being used.");
-            alert.showAndWait();
+                // user has approved with screen name, so unregister from EventBus
+                ConnectionService.getInstance().getEventBus().unregister(this);
+
+            } else {
+
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Screen Name Denied");
+                alert.setHeaderText("Your username has been denied. It is probably already being used.");
+                alert.showAndWait();
+
+            }
         });
     }
 
     private void loadChatWindow() {
-
         try {
-            // Load the ChatWindow
+
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(this.strikeClient.getClass().getResource("view/ChatWindow.fxml"));
             chatWindow = loader.load();
 
             // Give the chat window controller any details it needs.
             ChatWindowController controller = loader.getController();
-            controller.setStrikeClient(this.strikeClient);
-            //controller.setAuthenticatedSocket(authenticatedSocket);
+            //controller.setStrikeClient(this.strikeClient);
 
             chatWindowLoaded = true;
-        }
-        catch(IOException e) {
+
+        } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
+
+    private static final Logger logger = LogManager.getLogger(ScreenNameController.class);
 }

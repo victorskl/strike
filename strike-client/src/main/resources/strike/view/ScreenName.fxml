@@ -19,7 +19,7 @@
             <Font name="System Bold" size="16.0" />
          </font>
       </Button>
-      <Label layoutX="132.0" layoutY="58.0" prefHeight="40.0" prefWidth="210.0" text="This is the name that will appear next to your messages." textAlignment="CENTER" wrapText="true">
+      <Label layoutX="132.0" layoutY="58.0" prefHeight="40.0" prefWidth="210.0" text="Minimum 3 characters name that will appear next to your messages." textAlignment="CENTER" wrapText="true">
          <font>
             <Font name="Helvetica Light" size="13.0" />
          </font>

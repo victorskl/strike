@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<Pane prefHeight="750.0" prefWidth="475.0" styleClass="root" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="strike.controller.Login">
+<Pane prefHeight="750.0" prefWidth="475.0" styleClass="root" xmlns="http://javafx.com/javafx/8.0.112" xmlns:fx="http://javafx.com/fxml/1" fx:controller="strike.controller.Login">
     <stylesheets>
         <URL value="@style.css" />
     </stylesheets>
@@ -54,7 +54,7 @@
             </font>
         </Label>
         <VBox layoutX="98.0" layoutY="639.0" />
-      <Label layoutX="138.0" layoutY="180.0" prefHeight="90.0" prefWidth="210.0" text="A distributed chat server and client made for COMP90015." textAlignment="CENTER" wrapText="true">
+      <Label layoutX="138.0" layoutY="180.0" prefHeight="90.0" prefWidth="210.0" text="A distributed multi-server chat system. Demo (guest, guest)" textAlignment="CENTER" wrapText="true">
          <font>
             <Font name="Helvetica Light" size="13.0" />
          </font>

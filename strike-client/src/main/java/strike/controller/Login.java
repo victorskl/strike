@@ -1,5 +1,7 @@
 package strike.controller;
 
+import com.google.common.eventbus.Subscribe;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -8,10 +10,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
-import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -19,42 +19,27 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import strike.StrikeClient;
-import strike.common.model.Protocol;
+import strike.handler.ProtocolHandlerFactory;
+import strike.service.*;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.util.Comparator;
+import java.util.HashMap;
 
 public class Login {
 
-    private class ServerInfo {
-        public String address;
-        public Integer port;
-        public String serverID;
-
-        public ServerInfo(String address, Integer port, String serverID) {
-            this.address = address;
-            this.port = port;
-            this.serverID = serverID;
-        }
-    }
-
+    // TODO find out a better way to do this dependency injection
     private StrikeClient strikeClient;
-
-    private Configuration systemProperties;
-    private SSLSocketFactory sslsocketfactory;
-    private List<String> messages;
-    private JSONParser parser;
-    private SSLSocket socket = null;
-
-    HashMap<String, ServerInfo> serverInformationMap = new HashMap<>();
-
-    ObservableList<String> listOfServers = FXCollections.observableArrayList();
-
     public void setStrikeClient(StrikeClient strikeClient) {
         this.strikeClient = strikeClient;
     }
+
+    private JSONParser parser = new JSONParser();
+    private JSONMessageBuilder messageBuilder = JSONMessageBuilder.getInstance();
+
+    private HashMap<String, ServerInfo> serverInformationMap = new HashMap<>();
+    private ObservableList<String> listOfServers = FXCollections.observableArrayList();
 
     @FXML
     private TextField idUsername;
@@ -70,210 +55,134 @@ public class Login {
 
     @FXML
     private void initialize() {
-        /**
-         * Initializes the controller class. This method is automatically called
-         * after the fxml file has been loaded.
-         */
         logger.info("Login Controller Init...");
 
-        try {
-            File systemPropertiesFile = new File("./config/system.properties");
-            Configurations configs = new Configurations();
-            systemProperties = configs.properties(systemPropertiesFile);
-            parser = new JSONParser();
-        } catch (ConfigurationException e) {
-            e.printStackTrace();
-        }
-
-        messages = new ArrayList<>();
-
-        // MUST BE BEFORE SSLSocketFactory!!!
-        System.setProperty("javax.net.ssl.keyStore", systemProperties.getString("keystore"));
-        System.setProperty("javax.net.ssl.keyStorePassword", "strikepass");
-        System.setProperty("javax.net.ssl.trustStore", systemProperties.getString("keystore"));
-        //System.setProperty("javax.net.debug","all");
-
-        // Try to create the SSL socket we are going to use for all communication.
-        sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-
-        String localhost = systemProperties.getString("client.seed.server");
+        Configuration systemProperties = InitService.getInstance().getSystemProperties();
+        String host = systemProperties.getString("client.seed.server");
         int port = systemProperties.getInt("client.seed.server.port");
 
         try {
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // This server needs to be running or else we cannot get the server list!
-            socket = (SSLSocket) sslsocketfactory.createSocket(localhost, port);
+            ShortLiveTcpClient slTcpClient = new ShortLiveTcpClient(host, port);
+            String response = slTcpClient.comm(messageBuilder.createServerListMessage());
 
-            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // To run locally, use this socket instead!
-            // socket = (SSLSocket) sslsocketfactory.createSocket("localhost", 4444);
+            // {"servers":[{"address":"localhost","port":4444,"serverid":"s1"}],"type":"serverlist"}
+            JSONObject serverList = (JSONObject) parser.parse(response);
+            JSONArray servers = (JSONArray) serverList.get("servers");
+            for (Object o : servers) {
+                JSONObject server = (JSONObject) o;
+                String serverId = (String) server.get("serverid");
+                Number serverPort = (Number) server.get("port");
+                String address = (String) server.get("address");
+                serverInformationMap.put(serverId, new ServerInfo(address, serverPort.intValue(), serverId));
+            }
 
-            socket.startHandshake();
-        }
-        catch(IOException e) {
-            logger.log(Level.FATAL, "Unable to create SSL socket.");
-            System.exit(0);
-        }
+            listOfServers.addAll(serverInformationMap.keySet());
+            listOfServers.sort(Comparator.naturalOrder());
 
+            idServer.setItems(listOfServers);
 
-        JSONObject message = createServerListMessage();
-        JSONObject response = perform(socket, message); // (serverlist, not auth).
-        populateToggleGroup(response);
+        } catch (ConnectException e) {
 
-        try {
-            socket.close();
-        }
-        catch(IOException e) {
+            String content = String.format("Can't connect to discovery seed server: %s %d", host, port);
+
+            //e.printStackTrace();
+            logger.error(e.getMessage());
+            logger.error(content);
+
+            Alert alert = new Alert(Alert.AlertType.ERROR, content, ButtonType.OK);
+            alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+            alert.show();
+
+        } catch (ParseException e) {
             e.printStackTrace();
         }
-    }
-
-    private void populateToggleGroup(JSONObject serverList) {
-
-        JSONArray servers = (JSONArray)serverList.get("servers");
-
-        Iterator i = servers.iterator();
-
-        while(i.hasNext()) {
-            JSONObject server = (JSONObject)i.next();
-
-            String serverID = (String)server.get("serverid");
-            Number port = (Number)server.get("port");
-            String address = (String)server.get("address");
-
-            serverInformationMap.put(serverID, new ServerInfo(address, port.intValue(), serverID));
-        }
-
-        ArrayList<String> sorted = new ArrayList<>();
-        listOfServers.addAll(serverInformationMap.keySet());
-
-        Collections.sort(listOfServers, (String o1, String o2) -> {
-                return o1.compareTo(o2);
-        });
-
-        idServer.setItems(listOfServers);
     }
 
     @FXML
     public void login(ActionEvent actionEvent) {
 
         String username = idUsername.getText();
-        System.out.println(username);
 
-        String password =  idPassword.getText();
-        System.out.println(password);
+        String password = idPassword.getText();
 
         String accType = ((RadioButton) idAccountType.getSelectedToggle()).getText();
-        System.out.println(accType);
 
-        String selectedServerID = idServer.getSelectionModel().getSelectedItem();
-        ServerInfo info = serverInformationMap.get(selectedServerID);
-        System.err.println(info.toString());
+        String selectedServerId = idServer.getSelectionModel().getSelectedItem();
 
         try {
-            socket = (SSLSocket) sslsocketfactory.createSocket(info.address, info.port);
-            socket.startHandshake();
-        }
-        catch(IOException e) {
-            logger.log(Level.FATAL, "Unable to create SSL socket for authentication.");
-            System.exit(0);
-        }
 
-        // try to perform authorisation:
-        // Need to update the port to the server port chosen from the server list.
-        JSONObject authMessage = createAuthMessage(username, password, false);
-        JSONObject response = perform(socket, authMessage);
-        System.out.println(response.toJSONString());
+            if (selectedServerId == null) {
 
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Select server");
+                alert.setHeaderText("Please select server.");
+                alert.showAndWait();
 
+            } else {
 
-        if(response.get("success").equals("true")) {
-            // Show the screen name prompt.
-            try {
-                // Get the screenname.
-                FXMLLoader loader = new FXMLLoader();
-                loader.setLocation(this.strikeClient.getClass().getResource("view/ScreenName.fxml"));
-                Pane screenNameWindow = loader.load();
+                ServerInfo info = serverInformationMap.get(selectedServerId);
 
-                // Show the scene containing the root layout.
-                Scene scene = new Scene(screenNameWindow);
-                strikeClient.getPrimaryStage().setScene(scene);
-                strikeClient.getPrimaryStage().show();
+                ConnectionService connectionService = ConnectionService.getInstance();
+                connectionService.getEventBus().register(this);
+                connectionService.start(info.address, info.port);
 
-                // Pass the client to the screen name window.
-                ScreenNameController controller = loader.getController();
-                controller.setStrikeClient(this.strikeClient);
-                controller.setAuthenticatedSocket(this.socket);
-
-            } catch (IOException e) {
-                e.printStackTrace();
+                JSONObject authMessage = messageBuilder.createAuthMessage(username, password, false);
+                ProtocolHandlerFactory.newSendHandler(authMessage).handle();
             }
-        }
-        else { // Show an alert about couldn't authenticate.
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Unable to authenticate!");
-            alert.setHeaderText("Unable to authenticate your credentials. Please try again.");
-            alert.showAndWait();
+
+        } catch (ConnectException e) {
+            e.printStackTrace();
         }
     }
 
-    // Returns the response from the authorisation.
-    public JSONObject perform(SSLSocket socket, JSONObject authMessage) {
-        JSONObject response = null;
+    @Subscribe
+    public void success(Boolean success) {
+        Platform.runLater(() -> {
+            if (success) {
 
-        try {
-            for (String s : socket.getSupportedProtocols()) {
-                System.out.println(s);
+                try {
+                    // Get the screenname.
+                    FXMLLoader loader = new FXMLLoader();
+                    loader.setLocation(this.strikeClient.getClass().getResource("view/ScreenName.fxml"));
+                    Pane screenNameWindow = loader.load();
+
+                    // Show the scene containing the root layout.
+                    Scene scene = new Scene(screenNameWindow);
+                    strikeClient.getPrimaryStage().setScene(scene);
+                    strikeClient.getPrimaryStage().show();
+
+                    // Pass the client to the screen name window.
+                    ScreenNameController controller = loader.getController();
+                    controller.setStrikeClient(this.strikeClient);
+                    //controller.setAuthenticatedSocket(slTcpClient.getSocket());
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                // user has success with login, so unregister from EventBus
+                ConnectionService.getInstance().getEventBus().unregister(this);
+
+            } else {
+
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Unable to authenticate!");
+                alert.setHeaderText("Unable to authenticate your credentials. Please try again.");
+                alert.showAndWait();
             }
-            System.out.println();
+        });
+    }
 
-            // Write the message out.
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+    private class ServerInfo {
+        String address;
+        Integer port;
+        String serverId;
 
-            writer.write(authMessage+ "\n");
-            writer.flush();
-            System.out.println("Sending : " + authMessage);
-
-            // Wait for the response.
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-
-            String resp = reader.readLine();
-
-            try {
-                JSONObject jj = (JSONObject) parser.parse(resp);
-                response = jj;
-                System.out.println("Response : " + jj.toJSONString());
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-
-            //writer.close();
-            //reader.close();
-
-        } catch (IOException ioe) {
-            System.err.println("IO Exception somewhere.");
-            System.err.println(ioe.getMessage());
-            System.out.println(ioe.getCause());
+        ServerInfo(String address, Integer port, String serverId) {
+            this.address = address;
+            this.port = port;
+            this.serverId = serverId;
         }
-
-        return response;
-    }
-
-    private JSONObject createAuthMessage(String username, String password, boolean remember) {
-        // {"type" : "authenticate", "username" : "ray@example.com", "password":"cheese", "rememberme":"true"}
-        JSONObject jj = new JSONObject();
-        jj.put(Protocol.type.toString(), Protocol.authenticate.toString());
-        jj.put(Protocol.username.toString(), username); // define in shiro.ini
-        jj.put(Protocol.password.toString(), password); // define in shiro.ini
-        jj.put(Protocol.rememberme.toString(), String.format("%s", remember)); // true or false or not provide
-
-        return jj;
-    }
-
-    private JSONObject createServerListMessage() {
-        JSONObject request = new JSONObject();
-        request.put(Protocol.type.toString(), Protocol.listserver.toString());
-        return request;
     }
 
     private static final Logger logger = LogManager.getLogger(Login.class);

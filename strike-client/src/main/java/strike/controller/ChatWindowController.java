@@ -1,11 +1,12 @@
 package strike.controller;
 
-import au.edu.unimelb.tcp.client.Client;
+import com.google.common.eventbus.Subscribe;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -13,39 +14,18 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import strike.StrikeClient;
+import strike.handler.ProtocolHandlerFactory;
+import strike.model.Chatter;
+import strike.model.event.*;
+import strike.service.ClientState;
+import strike.service.ConnectionService;
+import strike.service.JSONMessageBuilder;
 
-import javax.net.ssl.SSLSocket;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ChatWindowController implements Client.IMessageReceiveHandler, Client.IRoomChangeHandler, Client.IClientListUpdateHandler {
-
-    private StrikeClient strikeClient;
-    private SSLSocket authenticatedSocket;
-
-    public void setStrikeClient(StrikeClient strikeClient) {
-        this.strikeClient = strikeClient;
-
-        StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
-        StackTraceElement e = stacktrace[2];//maybe this number needs to be corrected
-        String methodName = e.getMethodName();
-        System.err.println(methodName);
-
-        // Update the text when we get a new message from a client.
-        strikeClient.getClient().onMessageReceive("message", this);
-
-        // Update the GUI when we have changed rooms.
-        strikeClient.getClient().onRoomChange("change", this);
-
-        strikeClient.getClient().onClientListUpdate("joinleave", this);
-    }
-
-    public void setAuthenticatedSocket(SSLSocket authenticatedSocket) {
-        this.authenticatedSocket = authenticatedSocket;
-    }
+public class ChatWindowController {
 
     @FXML
     // Main input field.
@@ -70,14 +50,13 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
     @FXML
     private Text idUsernameLabel;
 
-    private Set<String> clientsInRoom = new HashSet<>();
+    private Set<Chatter> clientsInRoom = new HashSet<>();
+
+    private JSONMessageBuilder messageBuilder = JSONMessageBuilder.getInstance();
 
     @FXML
     private void initialize() {
-        /**
-         * Initializes the controller class. This method is automatically called
-         * after the fxml file has been loaded.
-         */
+
         logger.info("ChatWindow Controller Init...");
 
         idChatWindowContents.heightProperty().addListener((observable, oldVal, newVal) -> {
@@ -92,6 +71,9 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
             idClientsScrollPane.setVvalue(newVal.doubleValue());
         });
         */
+
+        ConnectionService.getInstance().getEventBus().register(this);
+        ProtocolHandlerFactory.newSendHandler(messageBuilder.helpMessage()).handle();
     }
 
     @FXML
@@ -103,7 +85,10 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
         idChatWindowContents.getChildren().add(text);
 
         // Send it to everyone.
-        this.strikeClient.getClient().SendMessage(message);
+        //this.strikeClient.getClient().SendMessage(message);
+
+        //TODO need more efficient way to send chat message??
+        ProtocolHandlerFactory.newSendHandler(messageBuilder.chatMessage(message)).handle();
 
         // Clean the input field.
         idMessageTextField.clear();
@@ -111,29 +96,32 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
 
     // Helper methods for updating the client list UI.
 
-    public void addClient(String client) {
+    private void appendSysMessage(String sysMessage) {
+        appendSysMessage(sysMessage, "-fx-font-weight: bold");
+    }
+
+    private void appendSysMessage(String sysMessage, String style) {
+        Text text = new Text(sysMessage);
+        text.setStyle(style);
+        idChatWindowContents.getChildren().add(text);
+    }
+
+    private void addClient(Chatter client) {
         clientsInRoom.add(client);
-        setClients(clientsInRoom);
+        updateClientListUI();
     }
 
-    public void removeClient(String client) {
+    private void removeClient(Chatter client) {
         clientsInRoom.remove(client);
-
-        setClients(clientsInRoom);
+        updateClientListUI();
     }
 
-    public void setClients(Set<String> clients) {
-
-        // Sort the clients alphabetically.
+    private void updateClients(Set<Chatter> clients) {
         clientsInRoom = clients;
-        ArrayList<String> clientsList = new ArrayList<>();
-        clientsList.addAll(clients);
-        Collections.sort(clientsList, String.CASE_INSENSITIVE_ORDER);
-
-        updateClientListUI(clientsList);
+        updateClientListUI();
     }
 
-    public void updateClientListUI(ArrayList<String> clients) {
+    private void updateClientListUI() {
 
         idClientsContents.getChildren().removeAll(idClientsContents.getChildren());
 
@@ -145,48 +133,44 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
 
         idClientsContents.getChildren().add(titleText);
 
-        for(String client : clients) {
+        for (Chatter client : clientsInRoom) {
 
             Text onlineSymbol = new Text("● ");
-            onlineSymbol.setFill(Color.rgb(103,207,96));
+            onlineSymbol.setFill(Color.rgb(103, 207, 96));
             onlineSymbol.setFont(Font.font("Helvetica", FontWeight.SEMI_BOLD, 16));
             idClientsContents.getChildren().add(onlineSymbol);
 
-            Text text = new Text(String.format("%s\n", client));
+            String clientStr = client.getId();
+            if (client.isRoomOwner())
+                clientStr = client.getId() + " ★";
+
+            Text text = new Text(String.format("%s\n", clientStr));
             text.setFill(Color.web("#666666"));
             text.setFont(Font.font("Helvetica", FontWeight.SEMI_BOLD, 14));
             idClientsContents.getChildren().add(text);
         }
     }
 
-
-    // Handle events
-    @Override
-    // When this client receives a message.
-    public void messageReceive(String sender, String message) {
-        // Need to call runLater, as it will schedule this on the main JavaFX Application Thread
-        // Can only update UI elements from the main thread.
+    @Subscribe
+    public void _messageReceive(MessageReceiveEvent event) {
+        // When this client receives a message.
         Platform.runLater(() -> {
-            Text text = new Text(String.format("%s: %s\n", sender, message));
+            Text text = new Text(String.format("%s: %s\n", event.getSender(), event.getMessage()));
             idChatWindowContents.getChildren().add(text);
             idScrollPane.setVvalue(1.0); // Move the scrollpane down to the bottom.
         });
     }
 
-    @Override
-    // When this client changes rooms.
-    public void roomChange(String from, String to) {
-        // Need to call runLater, as it will schedule this on the main JavaFX Application Thread
-        // Can only update UI elements from the main thread.
-
+    @Subscribe
+    public void _roomChange(RoomChangeEvent event) {
         Platform.runLater(() -> {
-
+            String from = event.getFrom();
+            String to = event.getTo();
             String message;
 
-            if(from.equals("")) {
-               message = String.format(String.format("You have joined the room '%s'.\n", to));
-            }
-            else {
+            if (from.equals("")) {
+                message = String.format(String.format("You have joined the room '%s'.\n", to));
+            } else {
                 message = String.format("You have changed from room: '%s' to '%s'.\n", from, to);
             }
 
@@ -199,88 +183,119 @@ public class ChatWindowController implements Client.IMessageReceiveHandler, Clie
             idRoomnameLabel.setText(String.format("#%s", to.toUpperCase()));
 
             // Also update the username. (Not ideal, best place to put it for now.)
-            idUsernameLabel.setText(String.format("@%s", strikeClient.getClient().getIdentity()));
+            idUsernameLabel.setText(String.format("@%s", ClientState.getInstance().getIdentity()));
 
             // Request a list of who is in the chat room.
-            this.strikeClient.getClient().requestClientListUpdate();
+            ProtocolHandlerFactory.newSendHandler(messageBuilder.whoMessage()).handle();
         });
     }
 
-
-    // When a new user joins or leaves the room this client is in.
-    @Override
-    public void userJoined(String userid) {
+    @Subscribe
+    public void _userJoined(UserJoinRoomEvent event) {
+        // When a new user joins or leaves the room this client is in.
         Platform.runLater(() -> {
             // Update the main chat window.
-            Text text = new Text(String.format("%s has joined the room!\n", userid));
+            Text text = new Text(String.format("%s has joined the room!\n", event.getChatter().getId()));
             text.setStyle("-fx-font-weight: bold");
             idChatWindowContents.getChildren().add(text);
 
             // Update the clients list.
-            addClient(userid);
+            addClient(event.getChatter());
         });
     }
 
-    @Override
-    public void userLeft(String userid) {
+    @Subscribe
+    public void _userLeft(UserLeftRoomEvent event) {
         Platform.runLater(() -> {
             // Update the main chat window.
-            Text text = new Text(String.format("%s has left the room!\n", userid));
+            Text text = new Text(String.format("%s has left the room!\n", event.getChatter().getId()));
             text.setStyle("-fx-font-weight: bold");
             idChatWindowContents.getChildren().add(text);
 
             // Update the clients list.
-            removeClient(userid);
+            removeClient(event.getChatter());
         });
     }
 
-    @Override
-    public void userQuit(String userid) {
+    @Subscribe
+    public void _receiveRoomContents(RoomContentsEvent event) {
         Platform.runLater(() -> {
-            // Update the main chat window.
-            Text text = new Text(String.format("%s has quit the server!\n", userid));
-            text.setStyle("-fx-font-weight: bold");
-            idChatWindowContents.getChildren().add(text);
-
-            // Update the clients list.
-            removeClient(userid);
+            updateClients(event.getClients());
         });
     }
 
-    @Override
-    public void receiveInitialClientList(Set<String> clients) {
+    @Subscribe
+    public void _receiveRoomList(RoomListEvent event) {
         Platform.runLater(() -> {
-            setClients(clients);
-        });
-    }
-
-    @Override
-    public void receiveRoomList(Set<String> rooms) {
-
-        ArrayList<String> roomArray = new ArrayList<>();
-        roomArray.addAll(rooms);
-
-        Collections.sort(roomArray, (String o1, String o2) -> {
-            return o1.compareTo(o2);
-        });
-
-        Platform.runLater(() -> {
-
-            String built = "";
-            String building = roomArray.get(0);
-            roomArray.remove(0);
-
-            for(String room : rooms) {
-                built = String.format("%s, %s", building, room);
-                building = built;
-            }
-
-            String finalString = built + "\n";
-
+            ArrayList<String> roomList = new ArrayList<>();
+            roomList.addAll(event.getRooms());
+            roomList.sort(String::compareTo);
+            String finalString = String.join(", ", roomList) + "\n";
             Text text = new Text(finalString);
             text.setFill(Color.GRAY);
             idChatWindowContents.getChildren().add(text);
         });
+    }
+
+    @Subscribe
+    public void _deleteRoomCallback(RoomDeleteEvent event) {
+        Platform.runLater(() -> {
+           if (event.isApproved()) {
+               appendSysMessage(String.format("%s is deleted.\n", event.getRoomId()));
+           } else {
+               String gangnamStyle = "-fx-font-weight: bold; -fx-text-fill: #006464;";
+               appendSysMessage(String.format("Ask owner of %s to delete the room.\n", event.getRoomId()), gangnamStyle);
+           }
+        });
+    }
+
+    @Subscribe
+    public void _createRoomCallback(RoomCreateEvent event) {
+        Platform.runLater(() -> {
+            if (event.isApproved()) {
+                appendSysMessage(String.format("%s is created.\n", event.getRoomId()));
+            } else {
+                appendSysMessage(String.format("Room %s may already exist.\n", event.getRoomId()));
+            }
+        });
+    }
+
+    @Subscribe
+    public void _ownerLeaveRoomCallback(OwnerLeaveRoomEvent event) {
+        Platform.runLater(() -> {
+            appendSysMessage(String.format("You are room owner of %s. Delete the room to leave.\n",
+                    ClientState.getInstance().getRoomId()));
+        });
+    }
+
+    @Subscribe
+    public void _commandInvalidCallback(CommandInvalidEvent event) {
+        Platform.runLater(() -> {
+            appendSysMessage(String.format("%s\n", event.getMessage()));
+        });
+    }
+
+    @Subscribe
+    public void _userQuit(UserQuitEvent event) {
+        Platform.runLater(() -> {
+            // Update the main chat window.
+            Text text = new Text(String.format("%s has quit the server!\n", event.getChatter().getId()));
+            text.setStyle("-fx-font-weight: bold");
+            idChatWindowContents.getChildren().add(text);
+
+            // Update the clients list.
+            removeClient(event.getChatter());
+
+            // TODO just exit the app for now
+            exitApplication(null);
+        });
+    }
+
+    @FXML
+    public void exitApplication(ActionEvent event) {
+        // close all stages and call for shutdown the entire application
+        logger.info("ChatWindow initiate exit application...");
+        Platform.exit();
     }
 
     private static final Logger logger = LogManager.getLogger(ChatWindowController.class);
