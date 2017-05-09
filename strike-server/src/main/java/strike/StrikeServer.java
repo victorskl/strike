@@ -111,13 +111,30 @@ public class StrikeServer {
             //addMainHallsStatically();
             syncChatRooms();
 
+            serverState.setupConnectedServers();
+            initiateCoordinator();
             startHeartBeat();
 
             // Shutdown hook
             Runtime.getRuntime().addShutdownHook(new ShutdownService(servicePool));
 
         } catch (CmdLineException e) {
-            logger.trace(e.getMessage());
+            logger.error(e.getMessage());
+        }
+    }
+
+    private void initiateCoordinator() {
+        logger.debug("Starting initial coordinator election...");
+        if (serverState.getServerInfoList().size() == 1) {
+            // if there's only one server then no need of an election
+            serverState.setCoordinator(serverInfo);
+        } else {
+            try {
+                new BullyElectionManagementService()
+                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList());
+            } catch (SchedulerException e) {
+                logger.error("Unable to start the election : " + e.getLocalizedMessage());
+            }
         }
     }
 
@@ -137,12 +154,12 @@ public class StrikeServer {
                                     .withIntervalInSeconds(systemProperties.getInt("alive.interval")).repeatForever())
                     .build();
 
-            Scheduler scheduler = new StdSchedulerFactory().getScheduler();
+            Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
             scheduler.start();
             scheduler.scheduleJob(aliveJob, aliveTrigger);
 
         } catch (SchedulerException e) {
-            e.printStackTrace();
+            logger.error(e.getLocalizedMessage());
         }
     }
 
