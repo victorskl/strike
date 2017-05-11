@@ -10,15 +10,20 @@ import strike.model.ServerInfo;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.List;
 
 public class PeerClient {
 
-    private JSONMessageBuilder messageBuilder = JSONMessageBuilder.getInstance();
-    private ServerState serverState = ServerState.getInstance();
-    private ServerInfo serverInfo = serverState.getServerInfo();
-    private JSONParser parser;
-    private SSLSocketFactory sslsocketfactory;
+    private final JSONMessageBuilder messageBuilder = JSONMessageBuilder.getInstance();
+    private final ServerState serverState = ServerState.getInstance();
+    private final ServerInfo serverInfo = serverState.getServerInfo();
+    private final JSONParser parser;
+    private final SSLSocketFactory sslsocketfactory;
 
     public PeerClient() {
         parser = new JSONParser();
@@ -28,28 +33,46 @@ public class PeerClient {
     public String commPeer(ServerInfo server, String message) {
 
         SSLSocket socket = null;
+        BufferedWriter writer = null;
+        BufferedReader reader = null;
         try {
             socket = (SSLSocket) sslsocketfactory.createSocket(server.getAddress(), server.getManagementPort());
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
             writer.write(message + "\n");
             writer.flush();
 
             logger.debug("[S2S]Sending  : [" + server.getServerId()
                     + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + message);
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
             return reader.readLine();
 
         } catch (IOException ioe) {
-            //ioe.printStackTrace();
-            logger.trace("Can't Connect: " + server.getServerId() + "@"
+            logger.error("Can't Connect: " + server.getServerId() + "@"
                     + server.getAddress() + ":" + server.getManagementPort());
         } finally {
             if (socket != null) {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error("Unable to close the socket : " + e.getLocalizedMessage());
+                    try {
+                        socket.close();
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ignored) {
+                    // this exception does not affect the overall execution of the application
+                }
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {
+                    // this exception does not affect the overall execution of the application
                 }
             }
         }
@@ -57,14 +80,54 @@ public class PeerClient {
         return null;
     }
 
+    public void commPeerOneWay(ServerInfo server, String message) {
+
+        SSLSocket socket = null;
+        BufferedWriter writer = null;
+        try {
+            socket = (SSLSocket) sslsocketfactory.createSocket(server.getAddress(), server.getManagementPort());
+            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+            writer.write(message + "\n");
+            writer.flush();
+
+            logger.debug("[S2S]Sending  : [" + server.getServerId()
+                    + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + message);
+            writer.close();
+        } catch (IOException ioe) {
+            logger.error("Can't Connect: " + server.getServerId() + "@"
+                    + server.getAddress() + ":" + server.getManagementPort());
+        } finally {
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    logger.error("Unable to close the socket : " + e.getLocalizedMessage());
+                    try {
+                        socket.close();
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ignored) {
+                    // this exception does not affect the overall execution of the application
+                }
+            }
+        }
+    }
+
     public String commPeer(ServerInfo server, String... messages) {
 
         if (messages.length < 1) return null;
 
+        BufferedWriter writer = null;
+        BufferedReader reader = null;
         SSLSocket socket = null;
         try {
             socket = (SSLSocket) sslsocketfactory.createSocket(server.getAddress(), server.getManagementPort());
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
             for (String message : messages) {
                 writer.write(message + "\n");
                 writer.flush();
@@ -72,19 +135,36 @@ public class PeerClient {
                         + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + message);
             }
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
             return reader.readLine();
 
         } catch (IOException ioe) {
-            //ioe.printStackTrace();
-            logger.trace("Can't Connect: " + server.getServerId() + "@"
+            logger.error("Can't Connect: " + server.getServerId() + "@"
                     + server.getAddress() + ":" + server.getManagementPort());
         } finally {
             if (socket != null) {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error("Unable to close the socket : " + e.getLocalizedMessage());
+                    try {
+                        socket.close();
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ignored) {
+                    // this exception does not affect the overall execution of the application
+                }
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {
+                    // this exception does not affect the overall execution of the application
                 }
             }
         }
@@ -106,38 +186,41 @@ public class PeerClient {
                 try {
                     jj = (JSONObject) parser.parse(resp);
                 } catch (ParseException e) {
-                    e.printStackTrace();
+                    logger.error("Unable to parse : " + e.getLocalizedMessage());
                 }
 
-                logger.debug("[S2S]Receiving: [" + server.getServerId()
-                        + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + jj.toJSONString());
-
-                // {"identity":"Adel","type":"lockidentity","locked":"false","serverid":"s2"}
-                String status = (String) jj.get(Protocol.locked.toString());
-                if (status.equalsIgnoreCase("false")) {
-                    canLock = false; // denied lock
+                if (jj != null) {
+                    logger.debug("[S2S]Receiving: [" + server.getServerId()
+                            + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + jj.toJSONString());
+                    // {"identity":"Adel","type":"lockidentity","locked":"false","serverid":"s2"}
+                    String status = (String) jj.get(Protocol.locked.toString());
+                    if (status.equalsIgnoreCase("false")) {
+                        canLock = false; // denied lock
+                    }
                 }
-
             }
         }
-
         return canLock;
     }
 
-    public void relayPeers(String jsonMessage) {
-        serverState.getServerInfoList().stream()
+    public void relaySelectedPeers(List<ServerInfo> selectedPeers, String jsonMessage) {
+        selectedPeers.stream()
                 .filter(server -> !server.getServerId().equalsIgnoreCase(this.serverInfo.getServerId()))
-                .forEach(server -> {
-                    commPeer(server, jsonMessage);
-                });
+                .forEach(server -> commPeerOneWay(server, jsonMessage));
     }
 
-    public String commServerSingleResp(ServerInfo server, String message) {
+    public void relayPeers(String jsonMessage) {
+        relaySelectedPeers(serverState.getServerInfoList(), jsonMessage);
+    }
 
+
+    public String commServerSingleResp(ServerInfo server, String message) {
+        BufferedWriter writer = null;
+        BufferedReader reader = null;
         SSLSocket socket = null;
         try {
             socket = (SSLSocket) sslsocketfactory.createSocket(server.getAddress(), server.getPort());
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
 
             performSystemDaemonAuthentication(writer);
 
@@ -147,7 +230,7 @@ public class PeerClient {
             logger.trace("[A52]Sending  : [" + server.getServerId()
                     + "@" + server.getAddress() + ":" + server.getPort() + "] " + message);
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
 
             String resp = null;
             for (int i = 0; i < 2; i++) { // 2 = one for performSystemDaemonAuthentication, one for actual message response
@@ -165,11 +248,28 @@ public class PeerClient {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error("Unable to close the socket : " + e.getLocalizedMessage());
+                    try {
+                        socket.close();
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ignored) {
+                    // this exception does not affect the overall execution of the application
+                }
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {
+                    // this exception does not affect the overall execution of the application
                 }
             }
         }
-
         return null;
     }
 

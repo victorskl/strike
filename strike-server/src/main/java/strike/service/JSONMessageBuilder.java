@@ -2,9 +2,9 @@ package strike.service;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import strike.common.model.Protocol;
 import strike.model.ChatRoomInfo;
 import strike.model.LocalChatRoomInfo;
-import strike.common.model.Protocol;
 import strike.model.ServerInfo;
 
 import java.util.stream.Collectors;
@@ -18,8 +18,8 @@ public class JSONMessageBuilder {
         return instance;
     }
 
-    private ServerState serverState = ServerState.getInstance();
-    private ServerInfo serverInfo = serverState.getServerInfo();
+    private final ServerState serverState = ServerState.getInstance();
+    private final ServerInfo serverInfo = serverState.getServerInfo();
 
     public String serverChange(String approved, String serverId) {
         // {"type" : "serverchange", "approved" : "true", "serverid" : "s2"}
@@ -282,6 +282,35 @@ public class JSONMessageBuilder {
         jj.put(Protocol.address.toString(), serverInfo.getAddress());
         jj.put(Protocol.port.toString(), serverInfo.getPort());
         jj.put(Protocol.managementport.toString(), serverInfo.getManagementPort());
+        return jj.toJSONString();
+    }
+
+    public String startElectionMessage(String serverId, String serverAddress, Long serverPort, Long
+            serverManagementPort){
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.startelection.toString());
+        jj.put(Protocol.serverid.toString(), serverId);
+        jj.put(Protocol.address.toString(), serverAddress);
+        jj.put(Protocol.port.toString(), String.valueOf(serverPort));
+        jj.put(Protocol.managementport.toString(), String.valueOf(serverManagementPort));
+        return jj.toJSONString();
+    }
+
+    public String electionAnswerMessage(String serverId){
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.answerelection.toString());
+        jj.put(Protocol.serverid.toString(), serverId);
+        return jj.toJSONString();
+    }
+
+    public String setCoordinatorMessage(String serverId, String serverAddress, Long serverPort, Long
+            serverManagementPort){
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.coordinator.toString());
+        jj.put(Protocol.serverid.toString(), serverId);
+        jj.put(Protocol.address.toString(), serverAddress);
+        jj.put(Protocol.port.toString(), String.valueOf(serverPort));
+        jj.put(Protocol.managementport.toString(), String.valueOf(serverManagementPort));
         return jj.toJSONString();
     }
 }

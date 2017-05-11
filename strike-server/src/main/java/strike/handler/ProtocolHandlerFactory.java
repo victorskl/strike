@@ -139,6 +139,17 @@ public class ProtocolHandlerFactory {
             return new NotifyServerDownProtocolHandler(jsonMessage, connection);
         }
 
+        if (type.equalsIgnoreCase(Protocol.startelection.toString())){
+            return new StartElectionMessageHandler(jsonMessage, connection);
+        }
+
+        if (type.equalsIgnoreCase(Protocol.answerelection.toString())) {
+            return new AnswerElectionMessageHandler(jsonMessage, connection);
+        }
+        if (type.equalsIgnoreCase(Protocol.coordinator.toString())){
+            return new SetCoordinatorHandler(jsonMessage, connection);
+        }
+
         return new BlackHoleHandler();
     }
 

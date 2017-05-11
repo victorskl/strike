@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ServerState {
+    private static final Logger logger = LogManager.getLogger(ServerState.class);
 
     private static ServerState instance;
 
@@ -30,10 +31,16 @@ public class ServerState {
     private Set<String> lockedRoomIdentities;
 
     private ConcurrentMap<String, ServerInfo> serverInfoMap;
+    private Map<String, ServerInfo> candidateServerInfoMap;
+    private Map<String, ServerInfo> subordinateServerInfoMap;
     private List<ServerInfo> serverInfoList;
     private ServerInfo serverInfo;
+    // elected coordinator for the server cluster
+    private ServerInfo coordinator;
 
     private AtomicBoolean stopRunning = new AtomicBoolean(false);
+
+//    private Scheduler simpleScheduler;
 
     private ServerState() {
         aliveMap = new ConcurrentHashMap<>();
@@ -45,6 +52,16 @@ public class ServerState {
         lockedIdentities = new HashSet<>();
         lockedRoomIdentities = new HashSet<>();
         serverInfoMap = new ConcurrentHashMap<>();
+        candidateServerInfoMap = new ConcurrentHashMap<>();
+        subordinateServerInfoMap = new ConcurrentHashMap<>();
+//        synchronized (ServerState.class){
+//            SchedulerFactory schedulerFactory = new StdSchedulerFactory();
+//            try {
+//                simpleScheduler = schedulerFactory.getScheduler();
+//            } catch (SchedulerException e) {
+//                logger.error("Error while creating scheduler : " + e.getLocalizedMessage());
+//            }
+//        }
     }
 
     public static synchronized ServerState getInstance() {
@@ -83,14 +100,28 @@ public class ServerState {
         return new ArrayList<>(serverInfoMap.values());
     }
 
+    public synchronized List<ServerInfo> getCandidateServerInfoList(){
+        return new ArrayList<>(candidateServerInfoMap.values());
+    }
+
+    public synchronized List<ServerInfo> getSubordinateServerInfoList() {
+        return new ArrayList<>(subordinateServerInfoMap.values());
+    }
+
     public synchronized void setServerInfoList(List<ServerInfo> serverInfoList) {
         //this.serverInfoList = serverInfoList;
         for (ServerInfo serverInfo : serverInfoList) {
-            serverInfoMap.put(serverInfo.getServerId(), serverInfo);
+            addServer(serverInfo);
         }
     }
 
     public synchronized void addServer(ServerInfo serverInfo) {
+        ServerInfo me = getServerInfo();
+        if (new ServerPriorityComparator().compare(me, serverInfo) > 0) {
+            candidateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
+        } else if (new ServerPriorityComparator().compare(me, serverInfo) < 0) {
+            subordinateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
+        }
         serverInfoMap.put(serverInfo.getServerId(), serverInfo);
 
 
@@ -107,6 +138,12 @@ public class ServerState {
             }
         }
 */
+    }
+
+    public synchronized void setupConnectedServers(){
+        for (ServerInfo server : getServerInfoList()){
+            addServer(server);
+        }
     }
 
     public synchronized void removeServer(String serverId) {
@@ -209,8 +246,8 @@ public class ServerState {
 
     // Utilities
 
-    public static int MIN_CHAR = 2;
-    public static int MAX_CHAR = 17;
+    public static final int MIN_CHAR = 2;
+    public static final int MAX_CHAR = 17;
 
     public boolean isIdValid(String id) {
         // The identity must be
@@ -237,5 +274,12 @@ public class ServerState {
         return online;
     }
 
-    private static final Logger logger = LogManager.getLogger(ServerState.class);
+
+    public synchronized ServerInfo getCoordinator() {
+        return coordinator;
+    }
+
+    public synchronized void setCoordinator(ServerInfo coordinator) {
+        this.coordinator = coordinator;
+    }
 }

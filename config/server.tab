@@ -1,3 +1,4 @@
-s1	localhost	4444	5555
-s2	localhost	4445	5556
-s3	127.0.0.1	4446	5000
+1	localhost	4444	5555
+2	localhost	4445	5556
+3	localhost	4446	5557
+4	localhost	4447	5558
