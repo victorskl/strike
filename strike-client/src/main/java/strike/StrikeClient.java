@@ -87,6 +87,7 @@ public class StrikeClient extends Application {
             ConnectionService.getInstance().stop();
             super.stop();
             logger.info("Bye!");
+            System.exit(0);
         } catch (Exception e) {
             e.printStackTrace();
         }
