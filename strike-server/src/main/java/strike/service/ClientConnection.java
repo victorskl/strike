@@ -3,6 +3,8 @@ package strike.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.session.ExpiredSessionException;
+import org.apache.shiro.session.UnknownSessionException;
 import org.apache.shiro.subject.Subject;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -89,19 +91,31 @@ public class ClientConnection implements Runnable {
             }
 
             pool.shutdown();
-            clientSocket.close();
             writer.close();
             reader.close();
+            clientSocket.close();
 
             if (userInfo != null) {
                 logger.info("Client disconnected: " + userInfo.getIdentity());
             }
 
         } catch (Exception e) {
-            logger.trace(e.getMessage());
+            logger.debug(e.getMessage());
             pool.shutdownNow();
         } finally {
             performUserLogoutAndUserSessionCleanUp();
+
+            // Let close the socket at this point as no longer use.
+            // So that no side effect.
+            if (!clientSocket.isClosed()) {
+                try {
+                    writer.close();
+                    reader.close();
+                    clientSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -119,20 +133,43 @@ public class ClientConnection implements Runnable {
 
     public void performUserLogoutAndUserSessionCleanUp() {
         if (currentUser != null) {
-            logger.info("Client disconnected: " + currentUser.getPrincipal());
 
-            Subject currentUser = getCurrentUser();
-            String username = (String) currentUser.getPrincipal();
             String sessionId = (String) currentUser.getSession().getId();
+            String username = "";
 
-            new PeerClient().relayPeers(JSONMessageBuilder.getInstance().notifyUserSession(username, sessionId, "logout"));
+            try {
 
-            serverState.getLocalUserSessions().remove(sessionId);
+                logger.info("Client disconnected: " + currentUser.getPrincipal());
 
-            logger.info(username + " with session [" + sessionId + "] has forced log out.");
+                // Subject currentUser = getCurrentUser();
+                username = (String) currentUser.getPrincipal();
 
-            // must be last
-            currentUser.logout();
+                new PeerClient().relayPeers(JSONMessageBuilder.getInstance().notifyUserSession(username, sessionId, "logout"));
+
+                serverState.getLocalUserSessions().remove(sessionId);
+
+                // must be last
+                currentUser.logout();
+
+            } catch (UnknownSessionException | ExpiredSessionException ignored) {
+
+                // handle session timeout
+
+                logger.debug("SessionException: " + ignored.getMessage() + ". It must has expired.");
+
+                username = serverState.getLocalUserSessions().get(sessionId).getUsername();
+
+                new PeerClient().relayPeers(JSONMessageBuilder.getInstance().notifyUserSession(username, sessionId, "logout"));
+
+                serverState.getLocalUserSessions().remove(sessionId);
+
+                // session timeout consider abrupt exit
+                ProtocolHandlerFactory.newClientHandler(null, this).handle();
+
+            } finally {
+
+                logger.info("Cleaning up " + username + " with session [" + sessionId + "].");
+            }
         }
     }
 

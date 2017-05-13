@@ -7,6 +7,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import strike.handler.ProtocolHandlerFactory;
 import strike.model.Message;
+import strike.model.event.SocketClosedEvent;
 
 import javax.net.ssl.SSLSocket;
 import java.io.*;
@@ -77,9 +78,9 @@ public class Connection implements Runnable {
             }
 
         } catch (InterruptedException | ParseException | IOException e) {
-            logger.trace(e.getMessage());
+            logger.debug(e.getMessage());
+            ConnectionService.getInstance().getEventBus().post(new SocketClosedEvent(e.getMessage()));
             pool.shutdownNow();
-            e.printStackTrace();
         } finally {
             // cleanup - must be in order - writer > reader > socket > pool
             logger.debug("Closing up connection... " + getId());

@@ -115,7 +115,7 @@ public class ScreenNameController {
 
             // Give the chat window controller any details it needs.
             ChatWindowController controller = loader.getController();
-            //controller.setStrikeClient(this.strikeClient);
+            controller.setStrikeClient(this.strikeClient);
 
             chatWindowLoaded = true;
 

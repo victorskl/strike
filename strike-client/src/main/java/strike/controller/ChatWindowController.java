@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
@@ -14,6 +15,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import strike.StrikeClient;
 import strike.handler.ProtocolHandlerFactory;
 import strike.model.Chatter;
 import strike.model.event.*;
@@ -26,6 +28,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ChatWindowController {
+
+    // TODO find out a better way to do this dependency injection
+    private StrikeClient strikeClient;
+
+    public void setStrikeClient(StrikeClient strikeClient) {
+        this.strikeClient = strikeClient;
+    }
 
     @FXML
     // Main input field.
@@ -291,11 +300,24 @@ public class ChatWindowController {
         });
     }
 
+    @Subscribe
+    public void _socketClosed(SocketClosedEvent event) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Connection Exception");
+            alert.setHeaderText("Connection exception has occurred.\nYour session might has been time out." +
+                    " Please login again.");
+            alert.showAndWait();
+            exitApplication(null);
+        });
+    }
+
     @FXML
     public void exitApplication(ActionEvent event) {
         // close all stages and call for shutdown the entire application
         logger.info("ChatWindow initiate exit application...");
-        Platform.exit();
+        // Platform.exit();
+        this.strikeClient.getPrimaryStage().close();
     }
 
     private static final Logger logger = LogManager.getLogger(ChatWindowController.class);
