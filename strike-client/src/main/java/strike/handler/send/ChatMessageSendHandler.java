@@ -49,7 +49,8 @@ public class ChatMessageSendHandler extends CommonHandler implements IProtocolHa
                 if (action.equalsIgnoreCase(ChatCommand.list.toString())) {
                     __send__(messageBuilder.getListRequest());
                 }
-                else if (action.equalsIgnoreCase(ChatCommand.quit.toString())) {
+                else if (action.equalsIgnoreCase(ChatCommand.quit.toString()) ||
+                        action.equalsIgnoreCase(ChatCommand.q.toString())) {
                     __send__(messageBuilder.getQuitRequest());
                 }
                 //else if (action.equalsIgnoreCase(ChatCommand.who.toString())) {
