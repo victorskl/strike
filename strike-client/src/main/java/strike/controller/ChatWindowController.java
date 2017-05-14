@@ -23,6 +23,10 @@ import strike.service.ClientState;
 import strike.service.ConnectionService;
 import strike.service.JSONMessageBuilder;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -161,8 +165,16 @@ public class ChatWindowController {
     public void _messageReceive(MessageReceiveEvent event) {
         // When this client receives a message.
         Platform.runLater(() -> {
-            Text text = new Text(String.format("%s: %s\n", event.getSender(), event.getMessage()));
-            idChatWindowContents.getChildren().add(text);
+            String me = ClientState.getInstance().getIdentity();
+            Instant timestamp = Instant.parse(event.getTimestamp());
+            LocalDateTime ldt = LocalDateTime.ofInstant(timestamp, ZoneId.systemDefault());
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("hh:mm:ss");
+            String ts = ldt.format(dateTimeFormatter);
+            Text text = new Text(String.format("[%s]  <%s>  %s\n", ts, event.getSender(), event.getMessage()));
+            if (me.equalsIgnoreCase(event.getSender())) {
+                text.setFill(Color.CRIMSON);
+            }
+            idChatWindowContents.getChildren().addAll(text);
             idScrollPane.setVvalue(1.0); // Move the scrollpane down to the bottom.
         });
     }

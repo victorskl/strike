@@ -20,10 +20,11 @@ public class MessageReceiveHandler extends CommonHandler implements IProtocolHan
 
         String identity = (String) jsonMessage.get(Protocol.identity.toString());
         String content = (String) jsonMessage.get(Protocol.content.toString());
+        String timestamp = (String) jsonMessage.get(Protocol.timestamp.toString());
 
         logger.trace(identity + ": " + content);
 
-        eventBus.post(new MessageReceiveEvent(identity, content));
+        eventBus.post(new MessageReceiveEvent(identity, content, timestamp));
     }
 
     private static final Logger logger = LogManager.getLogger(MessageReceiveHandler.class);

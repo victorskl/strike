@@ -8,5 +8,5 @@ public enum Protocol {
     movejoin, serverchange, listserver, serverlist, servers, address,
     authenticate, username, password, rememberme, authresponse, success, reason,
     sessionid, notifyusersession, status, alive, managementport, serverup, notifyserverdown,
-    startelection, answerelection, coordinator
+    startelection, answerelection, coordinator, timestamp
 }

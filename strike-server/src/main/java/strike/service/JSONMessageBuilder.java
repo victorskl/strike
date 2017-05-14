@@ -7,6 +7,7 @@ import strike.model.ChatRoomInfo;
 import strike.model.LocalChatRoomInfo;
 import strike.common.model.ServerInfo;
 
+import java.time.Instant;
 import java.util.stream.Collectors;
 
 public class JSONMessageBuilder {
@@ -59,6 +60,7 @@ public class JSONMessageBuilder {
         jj.put(Protocol.type.toString(), Protocol.message.toString());
         jj.put(Protocol.identity.toString(), identity);
         jj.put(Protocol.content.toString(), content);
+        jj.put(Protocol.timestamp.toString(), Instant.now().toString());
         return jj.toJSONString();
     }
 
