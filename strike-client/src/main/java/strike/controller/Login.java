@@ -20,7 +20,10 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import strike.StrikeClient;
 import strike.handler.ProtocolHandlerFactory;
-import strike.service.*;
+import strike.service.ConnectionService;
+import strike.service.InitService;
+import strike.service.JSONMessageBuilder;
+import strike.service.ShortLiveTcpClient;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -41,6 +44,8 @@ public class Login {
     private HashMap<String, ServerInfo> serverInformationMap = new HashMap<>();
     private ObservableList<String> listOfServers = FXCollections.observableArrayList();
 
+    boolean loadBalancerMode;
+
     @FXML
     private TextField idUsername;
 
@@ -60,7 +65,17 @@ public class Login {
         Configuration systemProperties = InitService.getInstance().getSystemProperties();
         String host = systemProperties.getString("client.seed.server");
         int port = systemProperties.getInt("client.seed.server.port");
+        loadBalancerMode = systemProperties.getBoolean("load.balancer.mode");
+        idServer.setDisable(loadBalancerMode);
 
+        if (loadBalancerMode) {
+            serverInformationMap.put("lb", new ServerInfo(host, port, "lb"));
+        } else {
+            directMode(host, port);
+        }
+    }
+
+    private void directMode(String host, int port) {
         try {
             ShortLiveTcpClient slTcpClient = new ShortLiveTcpClient(host, port);
             String response = slTcpClient.comm(messageBuilder.createServerListMessage());
@@ -109,27 +124,36 @@ public class Login {
 
         String selectedServerId = idServer.getSelectionModel().getSelectedItem();
 
-        try {
+        if (loadBalancerMode) {
+
+            ServerInfo info = serverInformationMap.get("lb");
+            performLogin(username, password, info);
+
+        } else {
 
             if (selectedServerId == null) {
-
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Select server");
                 alert.setHeaderText("Please select server.");
                 alert.showAndWait();
-
             } else {
-
                 ServerInfo info = serverInformationMap.get(selectedServerId);
-
-                ConnectionService connectionService = ConnectionService.getInstance();
-                connectionService.getEventBus().register(this);
-                connectionService.start(info.address, info.port);
-
-                JSONObject authMessage = messageBuilder.createAuthMessage(username, password, false);
-                ProtocolHandlerFactory.newSendHandler(authMessage).handle();
+                performLogin(username, password, info);
             }
+        }
 
+        ProgressBar progressBar = new ProgressBar();
+        strikeClient.getPrimaryStage().getScene();
+    }
+
+    private void performLogin(String username, String password, ServerInfo info) {
+        try {
+            ConnectionService connectionService = ConnectionService.getInstance();
+            connectionService.getEventBus().register(this);
+            connectionService.start(info.address, info.port);
+
+            JSONObject authMessage = messageBuilder.createAuthMessage(username, password, false);
+            ProtocolHandlerFactory.newSendHandler(authMessage).handle();
         } catch (ConnectException e) {
             e.printStackTrace();
         }
