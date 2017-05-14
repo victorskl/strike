@@ -41,7 +41,8 @@ public class StartElectionMessageHandler extends ManagementHandler implements IP
             // start a new election among the servers that have a higher priority
             try {
                 new BullyElectionManagementService()
-                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList());
+                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
+                                serverState.getElectionAnswerTimeout());
             } catch (SchedulerException e) {
                 logger.error("Unable to start the election : " + e.getLocalizedMessage());
             }

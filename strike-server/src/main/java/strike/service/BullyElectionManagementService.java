@@ -21,7 +21,8 @@ public class BullyElectionManagementService {
         peerClient = new PeerClient();
     }
 
-    public void startElection(ServerInfo proposingCoordinator, List<ServerInfo> candidatesList)
+    public void startElection(ServerInfo proposingCoordinator, List<ServerInfo> candidatesList, Long
+            electionAnswerTimeout)
             throws SchedulerException {
         logger.debug("Starting election...");
         String proposingCoordinatorServerId = proposingCoordinator.getServerId();
@@ -35,40 +36,36 @@ public class BullyElectionManagementService {
 
         // start a timer to wait for the candidate leaders to respond.
         // if they do not respond, the proposing server becomes the leader.
-        startWaitingForAnswerMessage(proposingCoordinator, StdSchedulerFactory.getDefaultScheduler(), 10L,
-                DateBuilder.IntervalUnit.SECOND
-        );
+        startWaitingForAnswerMessage(proposingCoordinator, StdSchedulerFactory.getDefaultScheduler(),
+                electionAnswerTimeout);
     }
 
     public void startWaitingTimer(ServerInfo proposingCoordinator, Scheduler scheduler, Long timeout,
-                                  DateBuilder.IntervalUnit unit,
                                   JobDetail jobDetail) throws SchedulerException {
         logger.debug("Starting the waiting job : " + jobDetail.getKey().getName());
         SimpleTrigger simpleTrigger =
                 (SimpleTrigger) TriggerBuilder.newTrigger()
                         .withIdentity("election_trigger", "group_" + proposingCoordinator.getServerId())
-                        .startAt(DateBuilder.futureDate(Math.toIntExact(timeout), unit))
+                        .startAt(DateBuilder.futureDate(Math.toIntExact(timeout), DateBuilder.IntervalUnit.SECOND))
                         .build();
         scheduler.scheduleJob(jobDetail, simpleTrigger);
     }
 
-    public void startWaitingForCoordinatorMessage(ServerInfo proposingCoordinator, Scheduler scheduler, Long timeout,
-                                                  DateBuilder.IntervalUnit unit)
+    public void startWaitingForCoordinatorMessage(ServerInfo proposingCoordinator, Scheduler scheduler, Long timeout)
             throws SchedulerException {
         JobDetail coordinatorMsgTimeoutJob =
                 JobBuilder.newJob(ElectionCoordinatorMessageTimeoutFinalizer.class).withIdentity
                         ("coordinator_msg_timeout_job", "group_" + proposingCoordinator.getServerId()).build();
-        startWaitingTimer(proposingCoordinator, scheduler, timeout, unit, coordinatorMsgTimeoutJob);
+        startWaitingTimer(proposingCoordinator, scheduler, timeout, coordinatorMsgTimeoutJob);
     }
 
 
-    public void startWaitingForAnswerMessage(ServerInfo proposingCoordinator, Scheduler scheduler, Long timeout,
-                                             DateBuilder.IntervalUnit unit)
+    public void startWaitingForAnswerMessage(ServerInfo proposingCoordinator, Scheduler scheduler, Long timeout)
             throws SchedulerException {
         JobDetail answerMsgTimeoutJob =
                 JobBuilder.newJob(ElectionAnswerMessageTimeoutFinalizer.class).withIdentity
                         ("answer_msg_timeout_job", "group_" + proposingCoordinator.getServerId()).build();
-        startWaitingTimer(proposingCoordinator, scheduler, timeout, unit, answerMsgTimeoutJob);
+        startWaitingTimer(proposingCoordinator, scheduler, timeout, answerMsgTimeoutJob);
     }
 
     public void replyAnswerForElectionMessage(ServerInfo requestingCandidate, ServerInfo me){

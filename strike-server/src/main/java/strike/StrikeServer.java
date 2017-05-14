@@ -81,7 +81,7 @@ public class StrikeServer {
                 Configurations configs = new Configurations();
                 systemProperties = configs.properties(systemPropertiesFile);
             } catch (ConfigurationException e) {
-                e.printStackTrace();
+                logger.error("Configuration error :  " + e.getLocalizedMessage());
             }
             logger.info("Setting up SSL system environment...");
             System.setProperty("javax.net.ssl.keyStore", systemProperties.getString("keystore"));
@@ -112,6 +112,7 @@ public class StrikeServer {
             syncChatRooms();
 
             serverState.setupConnectedServers();
+            readElectionTimeoutConfigurations();
             initiateCoordinator();
             startHeartBeat();
 
@@ -123,6 +124,11 @@ public class StrikeServer {
         }
     }
 
+    private void readElectionTimeoutConfigurations() {
+        serverState.setElectionAnswerTimeout(systemProperties.getLong("election.answer.timeout"));
+        serverState.setElectionCoordinatorTimeout(systemProperties.getLong("election.coordinator.timeout"));
+    }
+
     private void initiateCoordinator() {
         logger.debug("Starting initial coordinator election...");
         if (serverState.getServerInfoList().size() == 1) {
@@ -131,7 +137,8 @@ public class StrikeServer {
         } else {
             try {
                 new BullyElectionManagementService()
-                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList());
+                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
+                                serverState.getElectionAnswerTimeout());
             } catch (SchedulerException e) {
                 logger.error("Unable to start the election : " + e.getLocalizedMessage());
             }
