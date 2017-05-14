@@ -10,9 +10,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ServerState {
@@ -31,7 +29,7 @@ public class ServerState {
     private Set<String> lockedRoomIdentities;
 
     private ConcurrentMap<String, ServerInfo> serverInfoMap;
-    private Map<String, ServerInfo> candidateServerInfoMap;
+    private ConcurrentNavigableMap<String, ServerInfo> candidateServerInfoMap;
     private Map<String, ServerInfo> subordinateServerInfoMap;
     private List<ServerInfo> serverInfoList;
     private ServerInfo serverInfo;
@@ -39,6 +37,9 @@ public class ServerState {
     private ServerInfo coordinator;
 
     private AtomicBoolean stopRunning = new AtomicBoolean(false);
+
+    private Long electionAnswerTimeout;
+    private Long electionCoordinatorTimeout;
 
 //    private Scheduler simpleScheduler;
 
@@ -52,7 +53,8 @@ public class ServerState {
         lockedIdentities = new HashSet<>();
         lockedRoomIdentities = new HashSet<>();
         serverInfoMap = new ConcurrentHashMap<>();
-        candidateServerInfoMap = new ConcurrentHashMap<>();
+        // ConcurrentSkipListMap is thread safe and ordered by key
+        candidateServerInfoMap = new ConcurrentSkipListMap<>(new ServerPriorityComparator());
         subordinateServerInfoMap = new ConcurrentHashMap<>();
 //        synchronized (ServerState.class){
 //            SchedulerFactory schedulerFactory = new StdSchedulerFactory();
@@ -117,10 +119,12 @@ public class ServerState {
 
     public synchronized void addServer(ServerInfo serverInfo) {
         ServerInfo me = getServerInfo();
-        if (new ServerPriorityComparator().compare(me, serverInfo) > 0) {
-            candidateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
-        } else if (new ServerPriorityComparator().compare(me, serverInfo) < 0) {
-            subordinateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
+        if (null != me && null != serverInfo) {
+            if (new ServerPriorityComparator().compare(me.getServerId(), serverInfo.getServerId()) > 0) {
+                candidateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
+            } else if (new ServerPriorityComparator().compare(me.getServerId(), serverInfo.getServerId()) < 0) {
+                subordinateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
+            }
         }
         serverInfoMap.put(serverInfo.getServerId(), serverInfo);
 
@@ -144,6 +148,10 @@ public class ServerState {
         for (ServerInfo server : getServerInfoList()){
             addServer(server);
         }
+    }
+
+    public synchronized ServerInfo getNextPotentialCandidate(String serverId){
+        return candidateServerInfoMap.ceilingEntry(serverId).getValue();
     }
 
     public synchronized void removeServer(String serverId) {
@@ -281,5 +289,21 @@ public class ServerState {
 
     public synchronized void setCoordinator(ServerInfo coordinator) {
         this.coordinator = coordinator;
+    }
+
+    public Long getElectionAnswerTimeout() {
+        return electionAnswerTimeout;
+    }
+
+    public void setElectionAnswerTimeout(Long electionAnswerTimeout) {
+        this.electionAnswerTimeout = electionAnswerTimeout;
+    }
+
+    public Long getElectionCoordinatorTimeout() {
+        return electionCoordinatorTimeout;
+    }
+
+    public void setElectionCoordinatorTimeout(Long electionCoordinatorTimeout) {
+        this.electionCoordinatorTimeout = electionCoordinatorTimeout;
     }
 }
