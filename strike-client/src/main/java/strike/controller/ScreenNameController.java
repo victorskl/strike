@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import strike.StrikeClient;
+import strike.common.Utilities;
 import strike.handler.ProtocolHandlerFactory;
 import strike.service.ClientState;
 import strike.service.ConnectionService;
@@ -56,7 +57,18 @@ public class ScreenNameController {
             alert.setHeaderText("Please enter a screen name. It cannot be blank.");
             alert.showAndWait();
 
-        } else {
+        }
+
+        else if (!Utilities.isIdValid(screenName)) {
+
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Screen Name Invalid");
+            alert.setHeaderText("Please re-enter a screen name." +
+                    "\nIt must be an alphanumeric and length between 3 to 16.");
+            alert.showAndWait();
+        }
+
+        else {
 
             try {
 
@@ -81,7 +93,7 @@ public class ScreenNameController {
     }
 
     @Subscribe
-    public void approved(Boolean approved) {
+    public void _approved(Boolean approved) {
         Platform.runLater(() -> {
             if (approved) {
                 try {
