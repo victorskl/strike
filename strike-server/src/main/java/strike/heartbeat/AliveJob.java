@@ -19,7 +19,8 @@ public class AliveJob implements Job {
     public void execute(JobExecutionContext context) throws JobExecutionException {
 
         if (null != serverState.getCoordinator()) {
-            logger.debug("Current coordinator is : " + serverState.getCoordinator().getServerId());
+            // let it put in trace for now, bec take debug as default dev mode
+            logger.trace("Current coordinator is : " + serverState.getCoordinator().getServerId());
         }
 
         for (ServerInfo serverInfo : serverState.getServerInfoList()) {

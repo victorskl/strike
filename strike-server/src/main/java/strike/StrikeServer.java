@@ -41,7 +41,7 @@ import java.util.concurrent.Executors;
 public class StrikeServer {
 
     @Option(name = "-n", usage = "n=Server ID")
-    private String serverId = "s1";
+    private String serverId = "1";
 
     @Option(name = "-l", usage = "l=Server Configuration File")
     private String serverConfig = "./config/server.tab";
