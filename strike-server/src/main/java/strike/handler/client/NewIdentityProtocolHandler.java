@@ -3,6 +3,7 @@ package strike.handler.client;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
+import strike.common.Utilities;
 import strike.handler.IProtocolHandler;
 import strike.model.Message;
 import strike.common.model.Protocol;
@@ -20,7 +21,7 @@ public class NewIdentityProtocolHandler extends CommonHandler implements IProtoc
         String requestIdentity = (String) jsonMessage.get(Protocol.identity.toString());
 
         boolean isUserExisted = serverState.isUserExisted(requestIdentity);
-        boolean isUserIdValid = serverState.isIdValid(requestIdentity);
+        boolean isUserIdValid = Utilities.isIdValid(requestIdentity);
 
         if (isUserExisted || !isUserIdValid) {
             // {"type" : "newidentity", "approved" : "false"}

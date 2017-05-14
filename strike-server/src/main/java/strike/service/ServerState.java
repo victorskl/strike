@@ -1,6 +1,5 @@
 package strike.service;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import strike.common.model.ServerInfo;
@@ -254,17 +253,6 @@ public class ServerState {
     }
 
     // Utilities
-
-    public static final int MIN_CHAR = 2;
-    public static final int MAX_CHAR = 17;
-
-    public boolean isIdValid(String id) {
-        // The identity must be
-        // an alphanumeric string starting with an upper or lower case character.
-        // It must be at least 3 characters and no more than 16 characters long
-        int length = id.length();
-        return (StringUtils.isAlphanumeric(id) && length > MIN_CHAR && length < MAX_CHAR);
-    }
 
     public boolean isOnline(ServerInfo serverInfo) {
         boolean online = true;

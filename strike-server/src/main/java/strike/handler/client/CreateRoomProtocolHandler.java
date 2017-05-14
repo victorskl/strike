@@ -1,6 +1,7 @@
 package strike.handler.client;
 
 import org.json.simple.JSONObject;
+import strike.common.Utilities;
 import strike.handler.IProtocolHandler;
 import strike.model.LocalChatRoomInfo;
 import strike.common.model.Protocol;
@@ -17,7 +18,7 @@ public class CreateRoomProtocolHandler extends CommonHandler implements IProtoco
 
         boolean isRoomExisted = serverState.isRoomExistedGlobally(requestRoomId);
         boolean hasRoomAlreadyLocked = serverState.isRoomIdLocked(requestRoomId);
-        boolean isRoomIdValid = serverState.isIdValid(requestRoomId);
+        boolean isRoomIdValid = Utilities.isIdValid(requestRoomId);
 
         // if and only if the client is not the owner of another chat room
         if (userInfo.isRoomOwner() || hasRoomAlreadyLocked || isRoomExisted || !isRoomIdValid) {
