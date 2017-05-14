@@ -21,7 +21,8 @@ public class ElectionCoordinatorMessageTimeoutFinalizer implements Job, Interrup
             // therefore restart the election
             try {
                 new BullyElectionManagementService()
-                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList());
+                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
+                                serverState.getElectionAnswerTimeout());
             } catch (SchedulerException e) {
                 logger.error("Unable to start the election : " + e.getLocalizedMessage());
             }
