@@ -3,7 +3,6 @@ package strike.handler.management;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
-import org.quartz.DateBuilder;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
@@ -34,11 +33,11 @@ public class AnswerElectionMessageHandler extends ManagementHandler implements I
 
             // start waiting for the coordinator message
             new BullyElectionManagementService().startWaitingForCoordinatorMessage(serverState.getServerInfo(),
-                    simpleScheduler, 10L,
-                    DateBuilder.IntervalUnit.SECOND);
+                    simpleScheduler, serverState.getElectionCoordinatorTimeout());
         } catch (SchedulerException e) {
-            logger.error(
-                    "Error while creating the election job scheduler : " + e.getLocalizedMessage());
+            // this exception occurs when scheduler is unable to create another timeout, which is fine.
+            logger.debug(
+                    "Error while answering the election : " + e.getLocalizedMessage());
         }
     }
 }

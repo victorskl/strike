@@ -49,8 +49,8 @@ public class AliveJob implements Job {
                             .getCoordinator().getServerId())) {
                         // send the start election message to every server with a higher priority
                         try {
-                            new BullyElectionManagementService().startElection(serverState.getServerInfo(), serverState
-                                    .getCandidateServerInfoList());
+                            new BullyElectionManagementService().startElection(serverState.getServerInfo(),
+                                    serverState.getCandidateServerInfoList(), serverState.getElectionAnswerTimeout());
                         } catch (SchedulerException e) {
                             logger.error("Unable to start the election : " + e.getLocalizedMessage());
                         }
