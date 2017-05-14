@@ -19,7 +19,7 @@ public class InitService {
     private Configuration systemProperties;
 
     private InitService() {
-        File systemPropertiesFile = new File("./config/system.properties");
+        File systemPropertiesFile = new File("./config/client.properties");
         logger.info("Reading system properties file: " + systemPropertiesFile.getName());
         try {
             Configurations configs = new Configurations();
