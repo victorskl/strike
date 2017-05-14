@@ -59,6 +59,9 @@ public class Login {
     private ComboBox<String> idServer;
 
     @FXML
+    private ProgressIndicator progressIndicator;
+
+    @FXML
     private void initialize() {
         logger.info("Login Controller Init...");
 
@@ -142,8 +145,7 @@ public class Login {
             }
         }
 
-        ProgressBar progressBar = new ProgressBar();
-        strikeClient.getPrimaryStage().getScene();
+        progressIndicator.setVisible(true);
     }
 
     private void performLogin(String username, String password, ServerInfo info) {
@@ -160,8 +162,11 @@ public class Login {
     }
 
     @Subscribe
-    public void success(Boolean success) {
+    public void _success(Boolean success) {
         Platform.runLater(() -> {
+
+            progressIndicator.setVisible(false);
+
             if (success) {
 
                 try {
@@ -178,7 +183,6 @@ public class Login {
                     // Pass the client to the screen name window.
                     ScreenNameController controller = loader.getController();
                     controller.setStrikeClient(this.strikeClient);
-                    //controller.setAuthenticatedSocket(slTcpClient.getSocket());
 
                 } catch (IOException e) {
                     e.printStackTrace();

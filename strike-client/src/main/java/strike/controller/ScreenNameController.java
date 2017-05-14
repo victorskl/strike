@@ -8,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import org.apache.logging.log4j.LogManager;
@@ -38,6 +39,10 @@ public class ScreenNameController {
 
     @FXML
     private TextField idScreenName;
+
+    @FXML
+    private ProgressIndicator progressIndicator;
+
     private String screenName;
 
     @FXML
@@ -72,6 +77,8 @@ public class ScreenNameController {
 
             try {
 
+                progressIndicator.setVisible(true);
+
                 if (!chatWindowLoaded) {
                     loadChatWindow();
                 }
@@ -95,6 +102,9 @@ public class ScreenNameController {
     @Subscribe
     public void _approved(Boolean approved) {
         Platform.runLater(() -> {
+
+            progressIndicator.setVisible(false);
+
             if (approved) {
                 try {
                     Scene scene = new Scene(chatWindow);
