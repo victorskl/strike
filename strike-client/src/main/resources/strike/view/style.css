@@ -10,11 +10,13 @@
 
 .input {
     -fx-background-color: white;
+    -fx-font-size: 14;
 }
 
 .messageInput {
     -fx-background-color: white;
     -fx-border-color: white;
+    -fx-font-size: 14;
 }
 
 .usernameInput {
@@ -53,6 +55,7 @@
 
 .chatwindow {
     -fx-background-color: #eeeeee;
+    -fx-font-size: 13;
 }
 
 .serverlist {

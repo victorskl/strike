@@ -13,26 +13,26 @@
    <children>
       <Button layoutX="500.0" layoutY="349.0" mnemonicParsing="false" onAction="#didSendMessage" prefHeight="51.0" prefWidth="100.0" style="-fx-background-radius: 0;" styleClass="sendbutton" stylesheets="@style.css" text="Send" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
       <TextField fx:id="idMessageTextField" layoutX="116.0" layoutY="359.0" onAction="#didSendMessage" prefHeight="51.0" prefWidth="600.0" promptText="Message" style="-fx-border-radius: 0;" styleClass="messageInput" stylesheets="@style.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="100.0" />
-      <ScrollPane fx:id="idScrollPane" fitToWidth="true" styleClass="chatwindow" stylesheets="@style.css" vvalue="1.0" AnchorPane.bottomAnchor="51.0" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0">
+      <ScrollPane fx:id="idScrollPane" fitToWidth="true" styleClass="chatwindow" stylesheets="@style.css" vvalue="1.0" AnchorPane.bottomAnchor="51.0" AnchorPane.leftAnchor="150.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0">
       <TextFlow fx:id="idChatWindowContents" layoutX="14.0" layoutY="14.0" prefHeight="313.0" prefWidth="567.0" AnchorPane.bottomAnchor="51.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
       </ScrollPane>
-      <AnchorPane prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="51.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <AnchorPane prefHeight="200.0" prefWidth="150.0" AnchorPane.bottomAnchor="51.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <ScrollPane fx:id="idClientsScrollPane" prefHeight="200.0" prefWidth="200.0" styleClass="userlist" stylesheets="@style.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <ScrollPane fx:id="idClientsScrollPane" prefHeight="200.0" prefWidth="150.0" styleClass="userlist" stylesheets="@style.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
                <content>
-                  <TextFlow fx:id="idClientsContents" lineSpacing="12.0" prefHeight="100.0" prefWidth="198.0" styleClass="userlist" stylesheets="@style.css" />
+                  <TextFlow fx:id="idClientsContents" lineSpacing="12.0" prefHeight="100.0" prefWidth="148.0" styleClass="userlist" stylesheets="@style.css" />
                </content>
             </ScrollPane>
          </children>
       </AnchorPane>
-      <Pane layoutX="183.0" layoutY="-50.0" prefHeight="50.0" prefWidth="200.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <Pane layoutX="183.0" layoutY="-50.0" prefHeight="50.0" prefWidth="200.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="150.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <Text fx:id="idRoomnameLabel" layoutX="14.0" layoutY="23.0" strokeType="OUTSIDE" strokeWidth="0.0" text="#ROOMNAME">
                <font>
-                  <Font name="Helvetica Neue Bold" size="13.0" />
+                  <Font name="Helvetica Neue Bold" size="14.0" />
                </font>
             </Text>
-            <Text fx:id="idUsernameLabel" layoutX="14.0" layoutY="39.0" strokeType="OUTSIDE" strokeWidth="0.0" text="username" />
+            <Text fx:id="idUsernameLabel" style="-fx-font-size: 14.0" layoutX="14.0" layoutY="39.0" strokeType="OUTSIDE" strokeWidth="0.0" text="username" />
          </children>
       </Pane>
    </children>
