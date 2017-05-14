@@ -14,6 +14,6 @@ public class MessageProtocolHandler extends CommonHandler implements IProtocolHa
     public void handle() {
         // {"type" : "message", "content" : "Hi there!"}
         String content = (String) jsonMessage.get(Protocol.content.toString());
-        broadcastMessageToRoom(messageBuilder.message(userInfo.getIdentity(), content), userInfo.getCurrentChatRoom(), userInfo.getIdentity());
+        broadcastMessageToRoom(messageBuilder.message(userInfo.getIdentity(), content), userInfo.getCurrentChatRoom());
     }
 }

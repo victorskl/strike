@@ -91,10 +91,7 @@ public class ChatWindowController {
 
         // Add ours to the window.
         Text text = new Text(String.format("You: %s\n", message));
-        idChatWindowContents.getChildren().add(text);
-
-        // Send it to everyone.
-        //this.strikeClient.getClient().SendMessage(message);
+        //idChatWindowContents.getChildren().add(text);
 
         //TODO need more efficient way to send chat message??
         ProtocolHandlerFactory.newSendHandler(messageBuilder.chatMessage(message)).handle();
