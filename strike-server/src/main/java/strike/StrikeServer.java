@@ -28,7 +28,7 @@ import strike.common.model.Protocol;
 import strike.heartbeat.AliveJob;
 import strike.model.LocalChatRoomInfo;
 import strike.model.RemoteChatRoomInfo;
-import strike.model.ServerInfo;
+import strike.common.model.ServerInfo;
 import strike.service.*;
 
 import java.io.File;

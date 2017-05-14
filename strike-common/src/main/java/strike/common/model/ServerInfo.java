@@ -1,4 +1,4 @@
-package strike.model;
+package strike.common.model;
 
 import com.opencsv.bean.CsvBindByPosition;
 

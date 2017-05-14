@@ -3,7 +3,7 @@ package strike.handler.client;
 import org.json.simple.JSONObject;
 import strike.model.LocalChatRoomInfo;
 import strike.model.Message;
-import strike.model.ServerInfo;
+import strike.common.model.ServerInfo;
 import strike.model.UserInfo;
 import strike.service.ClientConnection;
 import strike.service.JSONMessageBuilder;

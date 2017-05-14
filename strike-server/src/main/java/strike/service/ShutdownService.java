@@ -2,7 +2,7 @@ package strike.service;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import strike.model.ServerInfo;
+import strike.common.model.ServerInfo;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;

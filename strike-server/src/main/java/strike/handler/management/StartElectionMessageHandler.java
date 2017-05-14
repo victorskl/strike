@@ -6,7 +6,7 @@ import org.json.simple.JSONObject;
 import org.quartz.SchedulerException;
 import strike.common.model.Protocol;
 import strike.handler.IProtocolHandler;
-import strike.model.ServerInfo;
+import strike.common.model.ServerInfo;
 import strike.service.BullyElectionManagementService;
 
 /**

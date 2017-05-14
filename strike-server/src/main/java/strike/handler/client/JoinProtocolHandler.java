@@ -8,7 +8,7 @@ import strike.handler.IProtocolHandler;
 import strike.model.Message;
 import strike.common.model.Protocol;
 import strike.model.RemoteChatRoomInfo;
-import strike.model.ServerInfo;
+import strike.common.model.ServerInfo;
 
 public class JoinProtocolHandler extends CommonHandler implements IProtocolHandler {
 

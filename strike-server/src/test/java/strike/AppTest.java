@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import strike.common.model.Protocol;
-import strike.model.ServerInfo;
+import strike.common.model.ServerInfo;
 
 import java.io.*;
 import java.net.Socket;

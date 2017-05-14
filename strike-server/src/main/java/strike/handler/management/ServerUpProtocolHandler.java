@@ -4,7 +4,7 @@ import org.json.simple.JSONObject;
 import strike.common.model.Protocol;
 import strike.handler.IProtocolHandler;
 import strike.model.Message;
-import strike.model.ServerInfo;
+import strike.common.model.ServerInfo;
 
 public class ServerUpProtocolHandler extends ManagementHandler implements IProtocolHandler {
 

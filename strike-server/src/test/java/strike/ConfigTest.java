@@ -6,7 +6,7 @@ import com.opencsv.bean.CsvToBean;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import strike.model.ServerInfo;
+import strike.common.model.ServerInfo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
