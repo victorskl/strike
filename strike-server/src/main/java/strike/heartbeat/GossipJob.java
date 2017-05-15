@@ -3,7 +3,7 @@ package strike.heartbeat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.*;
-import strike.model.ServerInfo;
+import strike.common.model.ServerInfo;
 import strike.service.JSONMessageBuilder;
 import strike.service.PeerClient;
 import strike.service.ServerState;
