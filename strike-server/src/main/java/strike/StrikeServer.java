@@ -26,6 +26,7 @@ import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.heartbeat.AliveJob;
+import strike.heartbeat.GossipJob;
 import strike.model.LocalChatRoomInfo;
 import strike.model.RemoteChatRoomInfo;
 import strike.common.model.ServerInfo;
@@ -115,6 +116,7 @@ public class StrikeServer {
             readElectionTimeoutConfigurations();
             initiateCoordinator();
             startHeartBeat();
+            //startGossip();
 
             // Shutdown hook
             Runtime.getRuntime().addShutdownHook(new ShutdownService(servicePool));
@@ -145,6 +147,30 @@ public class StrikeServer {
         }
     }
 
+    private void startGossip() {
+        try {
+
+            JobDetail gossipJob = JobBuilder.newJob(GossipJob.class)
+                    .withIdentity("GossipJob", "group1").build();
+
+            gossipJob.getJobDataMap().put("aliveErrorFactor", systemProperties.getInt("alive.error.factor"));
+
+            Trigger gossipTrigger = TriggerBuilder
+                    .newTrigger()
+                    .withIdentity("aliveJobTrigger", "group1")
+                    .withSchedule(
+                            SimpleScheduleBuilder.simpleSchedule()
+                                    .withIntervalInSeconds(systemProperties.getInt("alive.interval")).repeatForever())
+                    .build();
+
+            Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+            scheduler.start();
+            scheduler.scheduleJob(gossipJob, gossipTrigger);
+
+        } catch (SchedulerException e) {
+            logger.error(e.getLocalizedMessage());
+        }
+    }
     private void startHeartBeat() {
         try {
 
