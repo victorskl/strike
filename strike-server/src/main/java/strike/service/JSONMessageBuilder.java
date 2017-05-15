@@ -8,6 +8,7 @@ import strike.model.LocalChatRoomInfo;
 import strike.common.model.ServerInfo;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 public class JSONMessageBuilder {
@@ -313,6 +314,14 @@ public class JSONMessageBuilder {
         jj.put(Protocol.address.toString(), serverAddress);
         jj.put(Protocol.port.toString(), String.valueOf(serverPort));
         jj.put(Protocol.managementport.toString(), String.valueOf(serverManagementPort));
+        return jj.toJSONString();
+    }
+
+    public String gossipMessage(String serverId, HashMap<String, Integer> heartbeatCountList){
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.gossip.toString());
+        jj.put(Protocol.serverid.toString(), serverId);
+        jj.put(Protocol.heartbeatcountlist.toString(), heartbeatCountList);
         return jj.toJSONString();
     }
 }
