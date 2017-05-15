@@ -150,6 +150,10 @@ public class ProtocolHandlerFactory {
             return new SetCoordinatorHandler(jsonMessage, connection);
         }
 
+        if (type.equalsIgnoreCase(Protocol.gossip.toString())){
+            return new GossipProtocolHandler(jsonMessage, connection);
+        }
+
         return new BlackHoleHandler();
     }
 
