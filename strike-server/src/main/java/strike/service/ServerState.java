@@ -18,6 +18,9 @@ public class ServerState {
 
     private static ServerState instance;
 
+    private ConcurrentHashMap<String,Integer> suspectList;
+    private ConcurrentHashMap<String,Integer> heartbeatCountList;
+
     private ConcurrentMap<String, Integer> aliveMap;
     private ConcurrentMap<String, UserSession> localUserSessions;
     private ConcurrentMap<String, RemoteUserSession> remoteUserSessions;
@@ -44,6 +47,8 @@ public class ServerState {
 //    private Scheduler simpleScheduler;
 
     private ServerState() {
+        suspectList = new ConcurrentHashMap<>();
+        heartbeatCountList = new ConcurrentHashMap<>();
         aliveMap = new ConcurrentHashMap<>();
         localUserSessions = new ConcurrentHashMap<>();
         remoteUserSessions = new ConcurrentHashMap<>();
@@ -159,6 +164,9 @@ public class ServerState {
     }
 
     // thread safe
+    public ConcurrentHashMap<String, Integer> getSuspectList() { return suspectList; }
+
+    public ConcurrentHashMap<String, Integer> getHeartbeatCountList() { return heartbeatCountList; }
 
     public ConcurrentMap<String, Integer> getAliveMap() {
         return aliveMap;
