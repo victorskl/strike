@@ -17,7 +17,8 @@ public class ElectionAnswerMessageTimeoutFinalizer implements Job, Interruptable
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         if (!interrupted.get()) {
-            new BullyElectionManagementService().setupNewCoordinator(serverState.getServerInfo(), serverState);
+            new BullyElectionManagementService().setupNewCoordinator(serverState.getServerInfo(),
+                    serverState.getSubordinateServerInfoList(), serverState);
             logger.debug("Election was finalized and the new leader is : " + serverState.getServerInfo().getServerId());
         }
         try {

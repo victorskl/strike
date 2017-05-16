@@ -34,16 +34,19 @@ public class ServerState {
 
     private ConcurrentMap<String, ServerInfo> serverInfoMap;
     private ConcurrentNavigableMap<String, ServerInfo> candidateServerInfoMap;
+    private ConcurrentNavigableMap<String, ServerInfo> tempCandidateServerInfoMap;
     private Map<String, ServerInfo> subordinateServerInfoMap;
-    private List<ServerInfo> serverInfoList;
     private ServerInfo serverInfo;
     // elected coordinator for the server cluster
     private ServerInfo coordinator;
 
     private AtomicBoolean stopRunning = new AtomicBoolean(false);
 
+    private AtomicBoolean isFastBully;
+    private AtomicBoolean ongoingElection;
     private Long electionAnswerTimeout;
     private Long electionCoordinatorTimeout;
+    private Long electionNominationTimeout;
 
 //    private Scheduler simpleScheduler;
 
@@ -62,7 +65,10 @@ public class ServerState {
         serverInfoMap = new ConcurrentHashMap<>();
         // ConcurrentSkipListMap is thread safe and ordered by key
         candidateServerInfoMap = new ConcurrentSkipListMap<>(new ServerPriorityComparator());
+        tempCandidateServerInfoMap = new ConcurrentSkipListMap<>(new ServerPriorityComparator());
         subordinateServerInfoMap = new ConcurrentHashMap<>();
+        isFastBully = new AtomicBoolean();
+        ongoingElection = new AtomicBoolean(false);
 //        synchronized (ServerState.class){
 //            SchedulerFactory schedulerFactory = new StdSchedulerFactory();
 //            try {
@@ -109,6 +115,33 @@ public class ServerState {
         return new ArrayList<>(serverInfoMap.values());
     }
 
+    public void initializeTemporaryCandidateMap(){
+        tempCandidateServerInfoMap = new ConcurrentSkipListMap<>();
+    }
+
+    public ServerInfo getTopCandidate(){
+        return tempCandidateServerInfoMap.pollFirstEntry().getValue();
+    }
+
+    public void resetTemporaryCandidateMap(){
+        tempCandidateServerInfoMap = new ConcurrentSkipListMap<>();
+    }
+
+    public void addToTemporaryCandidateMap(ServerInfo serverInfo) {
+        ServerInfo me = getServerInfo();
+        if (null != serverInfo) {
+            if (null != me) {
+                if (new ServerPriorityComparator().compare(me.getServerId(), serverInfo.getServerId()) > 0) {
+                    tempCandidateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
+                }
+            }
+        }
+    }
+
+    public ServerInfo getTopCandidateWithoutRemoving(){
+        return candidateServerInfoMap.firstEntry().getValue();
+    }
+
     public synchronized List<ServerInfo> getCandidateServerInfoList(){
         return new ArrayList<>(candidateServerInfoMap.values());
     }
@@ -126,14 +159,16 @@ public class ServerState {
 
     public synchronized void addServer(ServerInfo serverInfo) {
         ServerInfo me = getServerInfo();
-        if (null != me && null != serverInfo) {
-            if (new ServerPriorityComparator().compare(me.getServerId(), serverInfo.getServerId()) > 0) {
-                candidateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
-            } else if (new ServerPriorityComparator().compare(me.getServerId(), serverInfo.getServerId()) < 0) {
-                subordinateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
+        if (null != serverInfo) {
+            if (null != me) {
+                if (new ServerPriorityComparator().compare(me.getServerId(), serverInfo.getServerId()) > 0) {
+                    candidateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
+                } else if (new ServerPriorityComparator().compare(me.getServerId(), serverInfo.getServerId()) < 0) {
+                    subordinateServerInfoMap.put(serverInfo.getServerId(), serverInfo);
+                }
             }
+            serverInfoMap.put(serverInfo.getServerId(), serverInfo);
         }
-        serverInfoMap.put(serverInfo.getServerId(), serverInfo);
 
 
 /*
@@ -155,10 +190,6 @@ public class ServerState {
         for (ServerInfo server : getServerInfoList()){
             addServer(server);
         }
-    }
-
-    public synchronized ServerInfo getNextPotentialCandidate(String serverId){
-        return candidateServerInfoMap.ceilingEntry(serverId).getValue();
     }
 
     public synchronized void removeServer(String serverId) {
@@ -300,6 +331,7 @@ public class ServerState {
     }
 
     public synchronized void setCoordinator(ServerInfo coordinator) {
+        addServer(coordinator);
         this.coordinator = coordinator;
     }
 
@@ -317,5 +349,29 @@ public class ServerState {
 
     public void setElectionCoordinatorTimeout(Long electionCoordinatorTimeout) {
         this.electionCoordinatorTimeout = electionCoordinatorTimeout;
+    }
+
+    public Long getElectionNominationTimeout() {
+        return electionNominationTimeout;
+    }
+
+    public void setElectionNominationTimeout(Long electionNominationTimeout) {
+        this.electionNominationTimeout = electionNominationTimeout;
+    }
+
+    public boolean getIsFastBully() {
+        return isFastBully.get();
+    }
+
+    public void setIsFastBully(boolean isFastBully) {
+        this.isFastBully.set(isFastBully);
+    }
+
+    public boolean isOngoingElection() {
+        return ongoingElection.get();
+    }
+
+    public void setOngoingElection(boolean ongoingElection) {
+        this.ongoingElection.set(ongoingElection);
     }
 }

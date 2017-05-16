@@ -3,6 +3,7 @@ package strike.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.*;
+import org.quartz.impl.StdSchedulerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -23,6 +24,8 @@ public class ElectionCoordinatorMessageTimeoutFinalizer implements Job, Interrup
                 new BullyElectionManagementService()
                         .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
                                 serverState.getElectionAnswerTimeout());
+                new BullyElectionManagementService().startWaitingForAnswerMessage(serverState.getServerInfo(),
+                        StdSchedulerFactory.getDefaultScheduler(), serverState.getElectionAnswerTimeout());
             } catch (SchedulerException e) {
                 logger.error("Unable to start the election : " + e.getLocalizedMessage());
             }
