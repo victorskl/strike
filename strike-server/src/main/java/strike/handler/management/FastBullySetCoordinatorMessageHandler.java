@@ -26,7 +26,7 @@ public class FastBullySetCoordinatorMessageHandler extends ManagementHandler imp
         logger.debug("Received coordinator from : " + jsonMessage.get(Protocol.serverid.toString()));
         try {
             new FastBullyElectionManagementService().stopElection(serverState.getServerInfo(),
-                    StdSchedulerFactory.getDefaultScheduler(), serverState);
+                    new StdSchedulerFactory().getScheduler(), serverState);
         } catch (SchedulerException e) {
             logger.error("Error while stopping the election : " + e.getLocalizedMessage());
         }

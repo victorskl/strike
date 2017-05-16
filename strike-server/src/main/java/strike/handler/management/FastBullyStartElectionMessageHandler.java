@@ -39,7 +39,7 @@ public class FastBullyStartElectionMessageHandler extends ManagementHandler impl
 
         try {
             fastBullyElectionManagementService.startWaitingForNominationOrCoordinationMessage(
-                    StdSchedulerFactory.getDefaultScheduler(), serverState.getElectionNominationTimeout());
+                    new StdSchedulerFactory().getScheduler(), serverState.getElectionNominationTimeout());
         } catch (SchedulerException e) {
             logger.error("Error while waiting for nomination or coordination message : " + e.getLocalizedMessage());
         }

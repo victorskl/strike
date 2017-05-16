@@ -19,7 +19,7 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
         logger.debug("Fast bully...");
         serverState.initializeTemporaryCandidateMap();
         startElection(proposingCoordinator, candidatesList, electionAnswerTimeout);
-        startWaitingForFastBullyAnswerMessage(StdSchedulerFactory.getDefaultScheduler(),
+        startWaitingForFastBullyAnswerMessage(new StdSchedulerFactory().getScheduler(),
                 electionAnswerTimeout);
     }
 

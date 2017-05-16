@@ -26,7 +26,7 @@ public class SetCoordinatorHandler extends ManagementHandler implements IProtoco
         logger.debug("Received coordinator from : " + jsonMessage.get(Protocol.serverid.toString()));
         try {
             new BullyElectionManagementService().stopElection(serverState.getServerInfo(),
-                    StdSchedulerFactory.getDefaultScheduler());
+                    new StdSchedulerFactory().getScheduler());
         } catch (SchedulerException e) {
             logger.error("Error while stopping the election : " + e.getLocalizedMessage());
         }

@@ -58,7 +58,7 @@ public class FastBullyViewMessageHandler extends ManagementHandler implements IP
         // stop the election
         try {
             fastBullyElectionManagementService
-                    .stopWaitingForViewMessage(StdSchedulerFactory.getDefaultScheduler());
+                    .stopWaitingForViewMessage(new StdSchedulerFactory().getScheduler());
         } catch (SchedulerException e) {
             logger.error("Error while stopping the election : " + e.getLocalizedMessage());
         }

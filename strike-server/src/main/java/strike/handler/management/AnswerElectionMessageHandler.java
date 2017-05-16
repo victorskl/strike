@@ -27,7 +27,7 @@ public class AnswerElectionMessageHandler extends ManagementHandler implements I
         logger.debug("Received answer from : " + jsonMessage.get(Protocol.serverid.toString()));
         try {
             // since the answer message timeout is no longer needed, stop that timeout first
-            Scheduler simpleScheduler = StdSchedulerFactory.getDefaultScheduler();
+            Scheduler simpleScheduler = new StdSchedulerFactory().getScheduler();
             new BullyElectionManagementService().stopWaitingForAnswerMessage(serverState.getServerInfo(),
                     simpleScheduler);
 
