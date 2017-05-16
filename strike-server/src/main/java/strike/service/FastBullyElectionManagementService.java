@@ -108,6 +108,10 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
     }
 
     public void sendViewMessage(ServerInfo sender, ServerInfo coordinator) {
+        if (null == coordinator){
+            // in the beginning coordinator could be null
+            coordinator = sender;
+        }
         String viewMessage = jsonMessageBuilder.viewMessage(coordinator.getServerId(), coordinator.getAddress(),
                 coordinator.getPort(), coordinator.getManagementPort());
         peerClient.commPeerOneWay(sender, viewMessage);
