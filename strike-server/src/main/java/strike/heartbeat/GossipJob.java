@@ -15,15 +15,9 @@ import java.util.HashMap;
 
 public class GossipJob implements Job {
 
-    private final JSONMessageBuilder messageBuilder = JSONMessageBuilder.getInstance();
     private final ServerState serverState = ServerState.getInstance();
-    private final JSONMessageBuilder jsonMessageBuilder;
-    private final PeerClient peerClient;
-
-    public GossipJob() {
-        this.jsonMessageBuilder = JSONMessageBuilder.getInstance();
-        peerClient = new PeerClient();
-    }
+    private final JSONMessageBuilder jsonMessageBuilder = JSONMessageBuilder.getInstance();
+    private final PeerClient peerClient = new PeerClient();
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
