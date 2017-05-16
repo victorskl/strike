@@ -129,8 +129,13 @@ public class StrikeServer {
     }
 
     private void readElectionTimeoutConfigurations() {
+        serverState.setIsFastBully(systemProperties.getBoolean("election.fast.bully"));
+        // T2
         serverState.setElectionAnswerTimeout(systemProperties.getLong("election.answer.timeout"));
+        // T3
         serverState.setElectionCoordinatorTimeout(systemProperties.getLong("election.coordinator.timeout"));
+        // T4
+        serverState.setElectionNominationTimeout(systemProperties.getLong("election.nomination.timeout"));
     }
 
     private void initiateCoordinator() {
@@ -139,12 +144,26 @@ public class StrikeServer {
             // if there's only one server then no need of an election
             serverState.setCoordinator(serverInfo);
         } else {
-            try {
-                new BullyElectionManagementService()
-                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
-                                serverState.getElectionAnswerTimeout());
-            } catch (SchedulerException e) {
-                logger.error("Unable to start the election : " + e.getLocalizedMessage());
+            if (serverState.getIsFastBully()) {
+                new FastBullyElectionManagementService().sendIamUpMessage(serverState.getServerInfo(),
+                        serverState.getServerInfoList());
+                try {
+                    new FastBullyElectionManagementService().startWaitingForViewMessage(StdSchedulerFactory
+                            .getDefaultScheduler(), serverState.getElectionAnswerTimeout());
+                } catch (SchedulerException e) {
+                    logger.error("Error while waiting for the view message at fast bully election: " +
+                            e.getLocalizedMessage());
+                }
+            } else {
+                try {
+                    new BullyElectionManagementService()
+                            .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
+                                    serverState.getElectionAnswerTimeout());
+                    new BullyElectionManagementService().startWaitingForAnswerMessage(serverState.getServerInfo(),
+                            StdSchedulerFactory.getDefaultScheduler(), serverState.getElectionAnswerTimeout());
+                } catch (SchedulerException e) {
+                    logger.error("Unable to start the default bully election : " + e.getLocalizedMessage());
+                }
             }
         }
     }
