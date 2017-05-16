@@ -270,11 +270,15 @@ public class JSONMessageBuilder {
 
     // Heartbeat
 
-    public String notifyServerDownMessage(String serverId) {
+    public String notifyServerDownMessage(String serverId, String serverAddress, Integer serverPort, Integer
+            serverManagementPort) {
         // {"type":"notifyserverdown", "serverid":"s2"}
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.notifyserverdown.toString());
         jj.put(Protocol.serverid.toString(), serverId);
+        jj.put(Protocol.address.toString(), serverAddress);
+        jj.put(Protocol.port.toString(), String.valueOf(serverPort));
+        jj.put(Protocol.managementport.toString(), String.valueOf(serverManagementPort));
         return jj.toJSONString();
     }
 
@@ -299,14 +303,18 @@ public class JSONMessageBuilder {
         return jj.toJSONString();
     }
 
-    public String electionAnswerMessage(String serverId){
+    public String electionAnswerMessage(String serverId, String serverAddress, Integer serverPort, Integer
+            serverManagementPort){
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.answerelection.toString());
         jj.put(Protocol.serverid.toString(), serverId);
+        jj.put(Protocol.address.toString(), serverAddress);
+        jj.put(Protocol.port.toString(), String.valueOf(serverPort));
+        jj.put(Protocol.managementport.toString(), String.valueOf(serverManagementPort));
         return jj.toJSONString();
     }
 
-    public String setCoordinatorMessage(String serverId, String serverAddress, Long serverPort, Long
+    public String setCoordinatorMessage(String serverId, String serverAddress, Integer serverPort, Integer
             serverManagementPort){
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.coordinator.toString());
@@ -341,6 +349,32 @@ public class JSONMessageBuilder {
         return jj.toJSONString();
     }
 
+    public String iAmUpMessage(String serverId, String serverAddress, Integer serverPort, Integer
+            serverManagementPort){
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.iamup.toString());
+        jj.put(Protocol.serverid.toString(), serverId);
+        jj.put(Protocol.address.toString(), serverAddress);
+        jj.put(Protocol.port.toString(), String.valueOf(serverPort));
+        jj.put(Protocol.managementport.toString(), String.valueOf(serverManagementPort));
+        return jj.toJSONString();
+    }
 
+    public String viewMessage(String coordinatorId, String coordinatorAddress, Integer coordinatorPort, Integer
+            coordinatorManagementPort){
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.viewelection.toString());
+        jj.put(Protocol.currentcoordinatorid.toString(), coordinatorId);
+        jj.put(Protocol.currentcoordinatoraddress.toString(), coordinatorAddress);
+        jj.put(Protocol.currentcoordinatorport.toString(), String.valueOf(coordinatorPort));
+        jj.put(Protocol.currentcoordinatormanagementport.toString(), String.valueOf(coordinatorManagementPort));
+        return jj.toJSONString();
+    }
+
+    public String nominationMessage(){
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.nominationelection.toString());
+        return jj.toJSONString();
+    }
 
 }
