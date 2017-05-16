@@ -3,7 +3,6 @@ package strike.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.*;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.ServerInfo;
 
 import java.util.List;
@@ -88,8 +87,11 @@ public class BullyElectionManagementService {
     }
 
     public void acceptNewCoordinator(ServerInfo newCoordinator, ServerState serverState) {
-        logger.debug("Accepting new coordinator...");
         serverState.setCoordinator(newCoordinator);
+        serverState.setOngoingElection(false);
+        serverState.setViewMessageReceived(false);
+        serverState.setAnswerMessageReceived(false);
+        logger.debug("Accepting new coordinator : " + newCoordinator.getServerId());
     }
 
     public void stopWaitingTimer(Scheduler scheduler, JobKey jobKey) throws SchedulerException {

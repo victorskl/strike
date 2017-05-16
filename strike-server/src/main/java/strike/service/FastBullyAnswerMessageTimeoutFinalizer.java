@@ -19,7 +19,7 @@ public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinali
         FastBullyElectionManagementService fastBullyElectionManagementService =
                 new FastBullyElectionManagementService();
 
-        if (interrupted.get()) {
+        if (serverState.answerMessageReceived() || interrupted.get()) {
             // answer messages were received
             ServerInfo topCandidate = serverState.getTopCandidate();
             fastBullyElectionManagementService.sendNominationMessage(topCandidate);
@@ -32,6 +32,7 @@ public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinali
                 logger.error("Error while starting the timer for waiting for coordinator message : " +
                         e.getLocalizedMessage());
             }
+            serverState.setAnswerMessageReceived(false);
         } else {
             // answer messages were not received
             // send coordinator message to lower priority servers

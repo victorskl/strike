@@ -18,6 +18,8 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
                               Long electionAnswerTimeout, ServerState serverState) throws SchedulerException {
         logger.debug("Fast bully...");
         serverState.initializeTemporaryCandidateMap();
+        serverState.setAnswerMessageReceived(false);
+        serverState.setOngoingElection(true);
         startElection(proposingCoordinator, candidatesList, electionAnswerTimeout);
         startWaitingForFastBullyAnswerMessage(new StdSchedulerFactory().getScheduler(),
                 electionAnswerTimeout);
@@ -74,6 +76,7 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
     public void stopElection(ServerInfo stoppingServer, Scheduler scheduler, ServerState serverState)
             throws SchedulerException {
         serverState.resetTemporaryCandidateMap();
+        serverState.setOngoingElection(false);
         stopWaitingForAnswerMessage(scheduler);
         stopWaitingForCoordinatorMessage(scheduler);
         stopWaitingForNominationMessage(scheduler);

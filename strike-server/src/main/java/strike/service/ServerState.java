@@ -44,6 +44,8 @@ public class ServerState {
 
     private AtomicBoolean isFastBully;
     private AtomicBoolean ongoingElection;
+    private AtomicBoolean answerMessageReceived;
+    private AtomicBoolean viewMessageReceived;
     private Long electionAnswerTimeout;
     private Long electionCoordinatorTimeout;
     private Long electionNominationTimeout;
@@ -69,6 +71,8 @@ public class ServerState {
         subordinateServerInfoMap = new ConcurrentHashMap<>();
         isFastBully = new AtomicBoolean();
         ongoingElection = new AtomicBoolean(false);
+        answerMessageReceived = new AtomicBoolean(false);
+        viewMessageReceived = new AtomicBoolean(false);
 //        synchronized (ServerState.class){
 //            SchedulerFactory schedulerFactory = new StdSchedulerFactory();
 //            try {
@@ -373,5 +377,21 @@ public class ServerState {
 
     public void setOngoingElection(boolean ongoingElection) {
         this.ongoingElection.set(ongoingElection);
+    }
+
+    public boolean answerMessageReceived() {
+        return answerMessageReceived.get();
+    }
+
+    public void setAnswerMessageReceived(boolean answerMessageReceived) {
+        this.answerMessageReceived.set(answerMessageReceived);
+    }
+
+    public boolean viewMessageReceived() {
+        return viewMessageReceived.get();
+    }
+
+    public void setViewMessageReceived(boolean viewMessageReceived) {
+        this.viewMessageReceived.set(viewMessageReceived);
     }
 }
