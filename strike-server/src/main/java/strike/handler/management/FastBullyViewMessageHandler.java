@@ -3,7 +3,6 @@ package strike.handler.management;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
-import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
@@ -24,6 +23,7 @@ public class FastBullyViewMessageHandler extends ManagementHandler implements IP
 
     @Override
     public void handle() {
+        serverState.setViewMessageReceived(true);
         String currentCoordinatorId = (String) jsonMessage.get(Protocol.currentcoordinatorid.toString());
         String coordinatorAddress = (String) jsonMessage.get(Protocol.currentcoordinatoraddress.toString());
         Integer coordinatorPort =
@@ -57,8 +57,7 @@ public class FastBullyViewMessageHandler extends ManagementHandler implements IP
         }
         // stop the election
         try {
-            fastBullyElectionManagementService
-                    .stopWaitingForViewMessage(new StdSchedulerFactory().getScheduler());
+            fastBullyElectionManagementService.stopWaitingForViewMessage(new StdSchedulerFactory().getScheduler());
         } catch (SchedulerException e) {
             logger.error("Error while stopping the election : " + e.getLocalizedMessage());
         }

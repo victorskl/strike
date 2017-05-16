@@ -116,9 +116,9 @@ public class StrikeServer {
             serverState.setupConnectedServers();
             readElectionTimeoutConfigurations();
             initiateCoordinator();
-            //startHeartBeat();
-            startGossip();
-            startConsensus();
+            startHeartBeat();
+//            startGossip();
+//            startConsensus();
 
             // Shutdown hook
             Runtime.getRuntime().addShutdownHook(new ShutdownService(servicePool));
@@ -148,6 +148,7 @@ public class StrikeServer {
                 new FastBullyElectionManagementService().sendIamUpMessage(serverState.getServerInfo(),
                         serverState.getServerInfoList());
                 try {
+                    serverState.setViewMessageReceived(false);
                     new FastBullyElectionManagementService().startWaitingForViewMessage(StdSchedulerFactory
                             .getDefaultScheduler(), serverState.getElectionAnswerTimeout());
                 } catch (SchedulerException e) {

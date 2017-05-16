@@ -24,7 +24,7 @@ public class FastBullyViewMessageTimeoutFinalizer extends MessageTimeoutFinalize
         FastBullyElectionManagementService fastBullyElectionManagementService =
                 new FastBullyElectionManagementService();
         ServerInfo myServerInfo = serverState.getServerInfo();
-        if (!interrupted.get()) {
+        if (!interrupted.get() && !serverState.viewMessageReceived()) {
             // a view message was not received
             try {
                 // stop the election
@@ -39,6 +39,7 @@ public class FastBullyViewMessageTimeoutFinalizer extends MessageTimeoutFinalize
                     .getSubordinateServerInfoList());
             // accept myself as the new coordinator
             fastBullyElectionManagementService.acceptNewCoordinator(myServerInfo, serverState);
+            serverState.setViewMessageReceived(false);
         }
     }
 }
