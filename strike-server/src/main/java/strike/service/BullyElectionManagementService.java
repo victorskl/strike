@@ -13,8 +13,8 @@ import java.util.List;
  */
 public class BullyElectionManagementService {
     private static final Logger logger = LogManager.getLogger(BullyElectionManagementService.class);
-    private final JSONMessageBuilder jsonMessageBuilder;
-    private final PeerClient peerClient;
+    protected JSONMessageBuilder jsonMessageBuilder;
+    protected PeerClient peerClient;
 
     public BullyElectionManagementService() {
         this.jsonMessageBuilder = JSONMessageBuilder.getInstance();
@@ -33,19 +33,14 @@ public class BullyElectionManagementService {
                 .startElectionMessage(proposingCoordinatorServerId, proposingCoordinatorAddress,
                         proposingCoordinatorPort, proposingCoordinatorManagementPort);
         peerClient.relaySelectedPeers(candidatesList, startElectionMessage);
-
-        // start a timer to wait for the candidate leaders to respond.
-        // if they do not respond, the proposing server becomes the leader.
-        startWaitingForAnswerMessage(proposingCoordinator, StdSchedulerFactory.getDefaultScheduler(),
-                electionAnswerTimeout);
     }
 
-    public void startWaitingTimer(ServerInfo proposingCoordinator, Scheduler scheduler, Long timeout,
+    public void startWaitingTimer(String groupId, Scheduler scheduler, Long timeout,
                                   JobDetail jobDetail) throws SchedulerException {
         logger.debug("Starting the waiting job : " + jobDetail.getKey().getName());
         SimpleTrigger simpleTrigger =
                 (SimpleTrigger) TriggerBuilder.newTrigger()
-                        .withIdentity("election_trigger", "group_" + proposingCoordinator.getServerId())
+                        .withIdentity("election_trigger", groupId)
                         .startAt(DateBuilder.futureDate(Math.toIntExact(timeout), DateBuilder.IntervalUnit.SECOND))
                         .build();
         scheduler.scheduleJob(jobDetail, simpleTrigger);
@@ -56,7 +51,7 @@ public class BullyElectionManagementService {
         JobDetail coordinatorMsgTimeoutJob =
                 JobBuilder.newJob(ElectionCoordinatorMessageTimeoutFinalizer.class).withIdentity
                         ("coordinator_msg_timeout_job", "group_" + proposingCoordinator.getServerId()).build();
-        startWaitingTimer(proposingCoordinator, scheduler, timeout, coordinatorMsgTimeoutJob);
+        startWaitingTimer("group_" + proposingCoordinator.getServerId(), scheduler, timeout, coordinatorMsgTimeoutJob);
     }
 
 
@@ -65,31 +60,34 @@ public class BullyElectionManagementService {
         JobDetail answerMsgTimeoutJob =
                 JobBuilder.newJob(ElectionAnswerMessageTimeoutFinalizer.class).withIdentity
                         ("answer_msg_timeout_job", "group_" + proposingCoordinator.getServerId()).build();
-        startWaitingTimer(proposingCoordinator, scheduler, timeout, answerMsgTimeoutJob);
+        startWaitingTimer("group_" + proposingCoordinator.getServerId(), scheduler, timeout, answerMsgTimeoutJob);
     }
 
-    public void replyAnswerForElectionMessage(ServerInfo requestingCandidate, ServerInfo me){
+    public void replyAnswerForElectionMessage(ServerInfo requestingCandidate, ServerInfo me) {
         logger.debug("Replying answer for the election start message from : " + requestingCandidate.getServerId());
-        peerClient.commPeerOneWay(requestingCandidate, jsonMessageBuilder.electionAnswerMessage(me.getServerId()));
+        String electionAnswerMessage = jsonMessageBuilder
+                .electionAnswerMessage(me.getServerId(), me.getAddress(), me.getPort(), me.getManagementPort());
+        peerClient.commPeerOneWay(requestingCandidate, electionAnswerMessage);
     }
 
-    public void setupNewCoordinator(ServerInfo newCoordinator, ServerState serverState) {
+    public void setupNewCoordinator(ServerInfo newCoordinator, List<ServerInfo> subordinateServerInfoList,
+                                    ServerState serverState) {
         logger.debug("Informing subordinates about the new coordinator...");
         // inform subordinates about the new coordinator
         String newCoordinatorServerId = newCoordinator.getServerId();
         String newCoordinatorAddress = newCoordinator.getAddress();
-        Long newCoordinatorServerPort = Long.valueOf(newCoordinator.getPort());
-        Long newCoordinatorServerManagementPort = Long.valueOf(newCoordinator.getManagementPort());
+        Integer newCoordinatorServerPort = newCoordinator.getPort();
+        Integer newCoordinatorServerManagementPort = newCoordinator.getManagementPort();
         String setCoordinatorMessage = jsonMessageBuilder
                 .setCoordinatorMessage(newCoordinatorServerId, newCoordinatorAddress, newCoordinatorServerPort,
                         newCoordinatorServerManagementPort);
-        peerClient.relaySelectedPeers(serverState.getSubordinateServerInfoList(), setCoordinatorMessage);
+        peerClient.relaySelectedPeers(subordinateServerInfoList, setCoordinatorMessage);
 
         // accept the new coordinator
-        acceptNewCoordinator(serverState.getServerInfo(), serverState);
+        acceptNewCoordinator(newCoordinator, serverState);
     }
 
-    public void acceptNewCoordinator(ServerInfo newCoordinator, ServerState serverState){
+    public void acceptNewCoordinator(ServerInfo newCoordinator, ServerState serverState) {
         logger.debug("Accepting new coordinator...");
         serverState.setCoordinator(newCoordinator);
     }
