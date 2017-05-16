@@ -68,8 +68,7 @@ public class AliveJob implements Job {
                             }
                         }
                     }
-                    peerClient.relayPeers(messageBuilder.notifyServerDownMessage(serverId, serverInfo.getAddress(),
-                            serverInfo.getPort(), serverInfo.getManagementPort()));
+                    peerClient.relayPeers(messageBuilder.notifyServerDownMessage(serverId));
                     logger.debug("Notify server " + serverId + " down. Removing...");
 
                     serverState.removeServer(serverId);

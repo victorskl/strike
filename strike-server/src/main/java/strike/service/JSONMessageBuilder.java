@@ -270,15 +270,11 @@ public class JSONMessageBuilder {
 
     // Heartbeat
 
-    public String notifyServerDownMessage(String serverId, String serverAddress, Integer serverPort, Integer
-            serverManagementPort) {
+    public String notifyServerDownMessage(String serverId) {
         // {"type":"notifyserverdown", "serverid":"s2"}
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.notifyserverdown.toString());
         jj.put(Protocol.serverid.toString(), serverId);
-        jj.put(Protocol.address.toString(), serverAddress);
-        jj.put(Protocol.port.toString(), String.valueOf(serverPort));
-        jj.put(Protocol.managementport.toString(), String.valueOf(serverManagementPort));
         return jj.toJSONString();
     }
 
