@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.quartz.SchedulerException;
+import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.handler.IProtocolHandler;
 import strike.common.model.ServerInfo;
@@ -43,6 +44,8 @@ public class StartElectionMessageHandler extends ManagementHandler implements IP
                 new BullyElectionManagementService()
                         .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
                                 serverState.getElectionAnswerTimeout());
+                new BullyElectionManagementService().startWaitingForAnswerMessage(serverState.getServerInfo(),
+                        StdSchedulerFactory.getDefaultScheduler(), serverState.getElectionAnswerTimeout());
             } catch (SchedulerException e) {
                 logger.error("Unable to start the election : " + e.getLocalizedMessage());
             }
