@@ -26,6 +26,7 @@ import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.heartbeat.AliveJob;
+import strike.heartbeat.ConsensusJob;
 import strike.heartbeat.GossipJob;
 import strike.model.LocalChatRoomInfo;
 import strike.model.RemoteChatRoomInfo;
@@ -115,8 +116,9 @@ public class StrikeServer {
             serverState.setupConnectedServers();
             readElectionTimeoutConfigurations();
             initiateCoordinator();
-            startHeartBeat();
-            //startGossip();
+            //startHeartBeat();
+            startGossip();
+            startConsensus();
 
             // Shutdown hook
             Runtime.getRuntime().addShutdownHook(new ShutdownService(servicePool));
@@ -144,6 +146,34 @@ public class StrikeServer {
             } catch (SchedulerException e) {
                 logger.error("Unable to start the election : " + e.getLocalizedMessage());
             }
+        }
+    }
+
+
+    private void startConsensus() {
+        try {
+
+            JobDetail consensusJob = JobBuilder.newJob(ConsensusJob.class)
+                    .withIdentity("ConsensusJob", "group1").build();
+
+            consensusJob.getJobDataMap().put("consensusVoteDuration", systemProperties.getInt("consensus.vote.duration"));
+
+
+            Trigger consensusTrigger = TriggerBuilder
+                    .newTrigger()
+                    .withIdentity("consensusJobTrigger", "group1")
+                    .withSchedule(
+                            SimpleScheduleBuilder.simpleSchedule()
+                                    .withIntervalInSeconds(systemProperties.getInt("consensus.interval")).repeatForever())
+                    .build();
+
+            Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+
+            scheduler.start();
+            scheduler.scheduleJob(consensusJob, consensusTrigger);
+
+        } catch (SchedulerException e) {
+            logger.error(e.getLocalizedMessage());
         }
     }
 

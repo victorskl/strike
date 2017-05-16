@@ -146,12 +146,21 @@ public class ProtocolHandlerFactory {
         if (type.equalsIgnoreCase(Protocol.answerelection.toString())) {
             return new AnswerElectionMessageHandler(jsonMessage, connection);
         }
+
         if (type.equalsIgnoreCase(Protocol.coordinator.toString())){
             return new SetCoordinatorHandler(jsonMessage, connection);
         }
 
         if (type.equalsIgnoreCase(Protocol.gossip.toString())){
             return new GossipProtocolHandler(jsonMessage, connection);
+        }
+
+        if (type.equalsIgnoreCase(Protocol.startvote.toString())){
+            return new StartVoteMessageHandler(jsonMessage, connection);
+        }
+
+        if (type.equalsIgnoreCase(Protocol.answervote.toString())){
+            return new AnswerVoteMessageHandler(jsonMessage, connection);
         }
 
         return new BlackHoleHandler();

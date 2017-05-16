@@ -324,4 +324,23 @@ public class JSONMessageBuilder {
         jj.put(Protocol.heartbeatcountlist.toString(), heartbeatCountList);
         return jj.toJSONString();
     }
+
+    public String startVoteMessage(String serverId, String suspectServerId){
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.startvote.toString());
+        jj.put(Protocol.serverid.toString(), serverId);
+        jj.put(Protocol.suspectserverid.toString(), suspectServerId);
+        return jj.toJSONString();
+    }
+
+    public String answerVoteMessage(String serverId, String vote){
+        JSONObject jj = new JSONObject();
+        jj.put(Protocol.type.toString(), Protocol.answervote.toString());
+        jj.put(Protocol.serverid.toString(), serverId);
+        jj.put(Protocol.vote.toString(), vote);
+        return jj.toJSONString();
+    }
+
+
+
 }

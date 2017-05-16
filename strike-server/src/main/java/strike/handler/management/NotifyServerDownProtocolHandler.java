@@ -22,6 +22,8 @@ public class NotifyServerDownProtocolHandler extends ManagementHandler implement
         serverState.removeServer(serverId);
         serverState.removeRemoteChatRoomsByServerId(serverId);
         serverState.removeRemoteUserSessionsByServerId(serverId);
+        serverState.removeServerInCountList(serverId);
+        serverState.removeServerInSuspectList(serverId);
 
         messageQueue.add(new Message(false, "exit"));
     }

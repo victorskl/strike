@@ -2,15 +2,18 @@ package strike.heartbeat;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.quartz.*;
+import org.quartz.Job;
+import org.quartz.JobDataMap;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import strike.common.model.ServerInfo;
 import strike.service.JSONMessageBuilder;
 import strike.service.PeerClient;
 import strike.service.ServerState;
 
 import java.util.ArrayList;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.HashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 
 public class GossipJob implements Job {
@@ -31,7 +34,7 @@ public class GossipJob implements Job {
             String myServerId = serverState.getServerInfo().getServerId();
             Integer count = serverState.getHeartbeatCountList().get(serverId);
             if (serverId.equalsIgnoreCase(myServerId)) {
-                serverState.getHeartbeatCountList().put(serverId,0);
+                serverState.getHeartbeatCountList().put(serverId, 0);
             } else {
                 if (count == null) {
                     serverState.getHeartbeatCountList().put(serverId, 1);
@@ -47,7 +50,7 @@ public class GossipJob implements Job {
             if (count != null) {
                 if (count > Integer.parseInt(aliveErrorFactor)) {
                     serverState.getSuspectList().put(serverId, 1);
-                    System.out.println("Suspecting server " + serverId);
+                    //System.out.println("Suspecting server " + serverId);
                 } else {
                     serverState.getSuspectList().put(serverId, 0);
                 }
@@ -58,8 +61,6 @@ public class GossipJob implements Job {
         int numOfServers = serverState.getServerInfoList().size();
 
 
-
-        System.out.println();
         //after updating the heartbeatCountList, randomly select a server and send
 
         int serverIndex = ThreadLocalRandom.current().nextInt(numOfServers - 1);
@@ -67,7 +68,7 @@ public class GossipJob implements Job {
         for (ServerInfo serverInfo : serverState.getServerInfoList()) {
             String serverId = serverInfo.getServerId();
             String myServerId = serverState.getServerInfo().getServerId();
-            if (!serverId.equalsIgnoreCase(myServerId)){
+            if (!serverId.equalsIgnoreCase(myServerId)) {
                 remoteServer.add(serverId);
             }
         }
@@ -78,7 +79,7 @@ public class GossipJob implements Job {
         String gossipMessage = jsonMessageBuilder.gossipMessage(serverState.getServerInfo().getServerId(), heartbeatCountList);
         peerClient.commPeerOneWay(serverState.getServerInfoById(remoteServer.get(serverIndex)), gossipMessage);
 
-        System.out.println("Sending to:"+(remoteServer.get(serverIndex))+"    "+ gossipMessage);
+        //System.out.println("Sending to:"+(remoteServer.get(serverIndex))+"    "+ gossipMessage);
 
     }
 

@@ -20,6 +20,7 @@ public class ServerState {
 
     private ConcurrentHashMap<String,Integer> suspectList;
     private ConcurrentHashMap<String,Integer> heartbeatCountList;
+    private ConcurrentHashMap<String,Integer> voteSet;
 
     private ConcurrentMap<String, Integer> aliveMap;
     private ConcurrentMap<String, UserSession> localUserSessions;
@@ -47,6 +48,7 @@ public class ServerState {
 //    private Scheduler simpleScheduler;
 
     private ServerState() {
+        voteSet = new ConcurrentHashMap<>();
         suspectList = new ConcurrentHashMap<>();
         heartbeatCountList = new ConcurrentHashMap<>();
         aliveMap = new ConcurrentHashMap<>();
@@ -163,7 +165,20 @@ public class ServerState {
         serverInfoMap.remove(serverId);
     }
 
+    public synchronized void removeServerInCountList(String serverId) {
+        heartbeatCountList.remove(serverId);
+    }
+    public synchronized void removeServerInSuspectList(String serverId) {
+        suspectList.remove(serverId);
+    }
+
+
+
+
+
     // thread safe
+    public ConcurrentHashMap<String, Integer> getVoteSet() { return  voteSet; }
+
     public ConcurrentHashMap<String, Integer> getSuspectList() { return suspectList; }
 
     public ConcurrentHashMap<String, Integer> getHeartbeatCountList() { return heartbeatCountList; }
