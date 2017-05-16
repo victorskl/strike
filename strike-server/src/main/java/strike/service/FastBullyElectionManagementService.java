@@ -80,7 +80,6 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
         stopWaitingForAnswerMessage(scheduler);
         stopWaitingForCoordinatorMessage(scheduler);
         stopWaitingForNominationMessage(scheduler);
-        stopWaitingForViewMessage(scheduler);
     }
 
     public void stopWaitingForAnswerMessage(Scheduler scheduler) throws SchedulerException {
