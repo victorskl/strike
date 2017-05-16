@@ -35,7 +35,7 @@ public class FastBullyAnswerElectionMessageHandler extends ManagementHandler imp
         // send nomination message to the top potential candidate
         try {
             new FastBullyElectionManagementService().setAnswerReceivedFlag(
-                    StdSchedulerFactory.getDefaultScheduler());
+                    new StdSchedulerFactory().getScheduler());
         } catch (SchedulerException e) {
             logger.error("Unable to set answer received flag : " + e.getLocalizedMessage());
         }

@@ -19,7 +19,7 @@ public class FastBullyNominationMessageTimeoutFinalizer extends MessageTimeoutFi
             try {
                 // stop any ongoing election
                 new FastBullyElectionManagementService()
-                        .stopElection(serverState.getServerInfo(), StdSchedulerFactory.getDefaultScheduler(),
+                        .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler(),
                                 serverState);
                 // restart the election procedure
                 new FastBullyElectionManagementService().startElection(serverState.getServerInfo(), serverState

@@ -37,7 +37,7 @@ public class FastBullyCoordinatorMessageTimeoutFinalizer extends MessageTimeoutF
                 // if there are no candidates, start an election
                 try {
                     fastBullyElectionManagementService
-                            .stopElection(serverState.getServerInfo(), StdSchedulerFactory.getDefaultScheduler(),
+                            .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler(),
                                     serverState);
                     fastBullyElectionManagementService.startElection(serverState.getServerInfo(), serverState
                             .getCandidateServerInfoList(), serverState.getElectionAnswerTimeout(), serverState);

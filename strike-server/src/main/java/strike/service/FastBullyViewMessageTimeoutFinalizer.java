@@ -29,7 +29,7 @@ public class FastBullyViewMessageTimeoutFinalizer extends MessageTimeoutFinalize
             try {
                 // stop the election
                 fastBullyElectionManagementService
-                        .stopElection(myServerInfo, StdSchedulerFactory.getDefaultScheduler(), serverState);
+                        .stopElection(myServerInfo, new StdSchedulerFactory().getScheduler(), serverState);
             } catch (SchedulerException e) {
                 logger.error("Error while stopping the election upon timeout at view message: "
                         + e.getLocalizedMessage());

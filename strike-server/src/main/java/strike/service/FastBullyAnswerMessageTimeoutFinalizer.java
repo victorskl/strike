@@ -26,7 +26,7 @@ public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinali
             logger.debug("Answer message received. Sending nomination to : " + topCandidate.getServerId());
             try {
                 fastBullyElectionManagementService
-                        .startWaitingForCoordinatorMessage(StdSchedulerFactory.getDefaultScheduler(),
+                        .startWaitingForCoordinatorMessage(new StdSchedulerFactory().getScheduler(),
                                 serverState.getElectionCoordinatorTimeout());
             } catch (SchedulerException e) {
                 logger.error("Error while starting the timer for waiting for coordinator message : " +
@@ -41,7 +41,7 @@ public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinali
             fastBullyElectionManagementService.acceptNewCoordinator(serverState.getServerInfo(), serverState);
             try {
                 fastBullyElectionManagementService
-                        .stopElection(serverState.getServerInfo(), StdSchedulerFactory.getDefaultScheduler(), serverState);
+                        .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler(), serverState);
             } catch (SchedulerException e) {
                 logger.error("Unable to stop the election : " + e.getLocalizedMessage());
             }

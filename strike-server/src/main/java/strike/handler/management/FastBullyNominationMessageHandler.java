@@ -32,7 +32,7 @@ public class FastBullyNominationMessageHandler extends ManagementHandler impleme
         try {
             // stop the election
             fastBullyElectionManagementService
-                    .stopElection(serverState.getServerInfo(), StdSchedulerFactory.getDefaultScheduler(), serverState);
+                    .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler(), serverState);
         } catch (SchedulerException e) {
             logger.error("Error while stopping the election upon receipt of nomination message : " +
                     e.getLocalizedMessage());
