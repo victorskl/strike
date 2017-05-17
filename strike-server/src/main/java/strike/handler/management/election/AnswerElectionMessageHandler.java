@@ -1,4 +1,4 @@
-package strike.handler.management;
+package strike.handler.management.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,13 +8,10 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.handler.IProtocolHandler;
-import strike.service.BullyElectionManagementService;
+import strike.handler.management.ManagementHandler;
+import strike.service.election.BullyElectionManagementService;
 
-/**
- *
- */
 public class AnswerElectionMessageHandler extends ManagementHandler implements IProtocolHandler {
-    private static final Logger logger = LogManager.getLogger(AnswerElectionMessageHandler.class);
 
     public AnswerElectionMessageHandler(JSONObject jsonMessage, Runnable connection) {
         super(jsonMessage, connection);
@@ -40,4 +37,6 @@ public class AnswerElectionMessageHandler extends ManagementHandler implements I
                     "Error while answering the election : " + e.getLocalizedMessage());
         }
     }
+
+    private static final Logger logger = LogManager.getLogger(AnswerElectionMessageHandler.class);
 }

@@ -1,4 +1,4 @@
-package strike.service;
+package strike.service.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,19 +8,19 @@ import strike.common.model.ServerInfo;
 
 import java.util.List;
 
-/**
- *
- */
 public class FastBullyElectionManagementService extends BullyElectionManagementService {
-    private static final Logger logger = LogManager.getLogger(FastBullyElectionManagementService.class);
 
     public void startElection(ServerInfo proposingCoordinator, List<ServerInfo> candidatesList,
-                              Long electionAnswerTimeout, ServerState serverState) throws SchedulerException {
-        logger.debug("Fast bully...");
+                              Long electionAnswerTimeout) throws SchedulerException {
+
+        logger.debug("Starting Fast-Bully Election...");
+
         serverState.initializeTemporaryCandidateMap();
         serverState.setAnswerMessageReceived(false);
         serverState.setOngoingElection(true);
-        startElection(proposingCoordinator, candidatesList, electionAnswerTimeout);
+
+        super.startElection(proposingCoordinator, candidatesList, electionAnswerTimeout);
+
         startWaitingForFastBullyAnswerMessage(new StdSchedulerFactory().getScheduler(),
                 electionAnswerTimeout);
     }
@@ -66,6 +66,9 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
         startWaitingTimer("group_fast_bully", scheduler, timeout, coordinatorMsgTimeoutJob);
     }
 
+    /**
+     * This is Boot time only election timer job.
+     */
     public void startWaitingForViewMessage(Scheduler scheduler, Long electionAnswerTimeout) throws SchedulerException {
         JobDetail coordinatorMsgTimeoutJob =
                 JobBuilder.newJob(FastBullyViewMessageTimeoutFinalizer.class).withIdentity
@@ -73,10 +76,12 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
         startWaitingTimer("group_fast_bully", scheduler, electionAnswerTimeout, coordinatorMsgTimeoutJob);
     }
 
-    public void stopElection(ServerInfo stoppingServer, Scheduler scheduler, ServerState serverState)
+    public void stopElection(ServerInfo stoppingServer, Scheduler scheduler)
             throws SchedulerException {
+
         serverState.resetTemporaryCandidateMap();
         serverState.setOngoingElection(false);
+
         stopWaitingForAnswerMessage(scheduler);
         stopWaitingForCoordinatorMessage(scheduler);
         stopWaitingForNominationMessage(scheduler);
@@ -110,7 +115,7 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
     }
 
     public void sendViewMessage(ServerInfo sender, ServerInfo coordinator) {
-        if (null == coordinator){
+        if (null == coordinator) {
             // in the beginning coordinator could be null
             coordinator = sender;
         }
@@ -129,4 +134,5 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
         peerClient.relaySelectedPeers(subordinateServerInfoList, coordinatorMessage);
     }
 
+    private static final Logger logger = LogManager.getLogger(FastBullyElectionManagementService.class);
 }

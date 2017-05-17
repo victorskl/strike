@@ -1,4 +1,4 @@
-package strike.handler.management;
+package strike.handler.management.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,13 +8,10 @@ import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.common.model.ServerInfo;
 import strike.handler.IProtocolHandler;
-import strike.service.FastBullyElectionManagementService;
+import strike.handler.management.ManagementHandler;
+import strike.service.election.FastBullyElectionManagementService;
 
-/**
- *
- */
 public class FastBullySetCoordinatorMessageHandler extends ManagementHandler implements IProtocolHandler {
-    private static final Logger logger = LogManager.getLogger(FastBullySetCoordinatorMessageHandler.class);
 
     public FastBullySetCoordinatorMessageHandler(JSONObject jsonMessage, Runnable connection) {
         super(jsonMessage, connection);
@@ -26,7 +23,7 @@ public class FastBullySetCoordinatorMessageHandler extends ManagementHandler imp
         logger.debug("Received coordinator from : " + jsonMessage.get(Protocol.serverid.toString()));
         try {
             new FastBullyElectionManagementService().stopElection(serverState.getServerInfo(),
-                    new StdSchedulerFactory().getScheduler(), serverState);
+                    new StdSchedulerFactory().getScheduler());
         } catch (SchedulerException e) {
             logger.error("Error while stopping the election : " + e.getLocalizedMessage());
         }
@@ -39,6 +36,8 @@ public class FastBullySetCoordinatorMessageHandler extends ManagementHandler imp
                 Integer.parseInt((String) jsonMessage.get(Protocol.managementport.toString()));
         ServerInfo newCoordinator = new ServerInfo(newCoordinatorId, newCoordinatorAddress, newCoordinatorPort,
                 newCoordinatorManagementPort);
-        new FastBullyElectionManagementService().acceptNewCoordinator(newCoordinator, serverState);
+        new FastBullyElectionManagementService().acceptNewCoordinator(newCoordinator);
     }
+
+    private static final Logger logger = LogManager.getLogger(FastBullySetCoordinatorMessageHandler.class);
 }

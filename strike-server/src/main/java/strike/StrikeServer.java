@@ -25,13 +25,15 @@ import org.kohsuke.args4j.Option;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
+import strike.common.model.ServerInfo;
 import strike.heartbeat.AliveJob;
 import strike.heartbeat.ConsensusJob;
 import strike.heartbeat.GossipJob;
 import strike.model.LocalChatRoomInfo;
 import strike.model.RemoteChatRoomInfo;
-import strike.common.model.ServerInfo;
 import strike.service.*;
+import strike.service.election.BullyElectionManagementService;
+import strike.service.election.FastBullyElectionManagementService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -87,7 +89,7 @@ public class StrikeServer {
             }
             logger.info("Setting up SSL system environment...");
             System.setProperty("javax.net.ssl.keyStore", systemProperties.getString("keystore"));
-            System.setProperty("javax.net.ssl.keyStorePassword","strikepass");
+            System.setProperty("javax.net.ssl.keyStorePassword", "strikepass");
             System.setProperty("javax.net.ssl.trustStore", systemProperties.getString("keystore")); // needed for PeerClient
             //System.setProperty("javax.net.debug","all"); // uncomment to debug SSL, and comment it back there after
 
@@ -116,9 +118,13 @@ public class StrikeServer {
             serverState.setupConnectedServers();
             readElectionTimeoutConfigurations();
             initiateCoordinator();
-            startHeartBeat();
-//            startGossip();
-//            startConsensus();
+
+            if (systemProperties.getBoolean("failure.detector.gossip")) {
+                startGossip();
+                startConsensus();
+            } else {
+                startHeartBeat();
+            }
 
             // Shutdown hook
             Runtime.getRuntime().addShutdownHook(new ShutdownService(servicePool));
@@ -168,7 +174,6 @@ public class StrikeServer {
             }
         }
     }
-
 
     private void startConsensus() {
         try {
@@ -221,6 +226,7 @@ public class StrikeServer {
             logger.error(e.getLocalizedMessage());
         }
     }
+
     private void startHeartBeat() {
         try {
 

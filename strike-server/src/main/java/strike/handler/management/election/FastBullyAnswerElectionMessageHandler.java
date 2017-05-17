@@ -1,4 +1,4 @@
-package strike.handler.management;
+package strike.handler.management.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -6,12 +6,9 @@ import org.json.simple.JSONObject;
 import strike.common.model.Protocol;
 import strike.common.model.ServerInfo;
 import strike.handler.IProtocolHandler;
+import strike.handler.management.ManagementHandler;
 
-/**
- *
- */
 public class FastBullyAnswerElectionMessageHandler extends ManagementHandler implements IProtocolHandler {
-    private static final Logger logger = LogManager.getLogger(FastBullyAnswerElectionMessageHandler.class);
 
     public FastBullyAnswerElectionMessageHandler(JSONObject jsonMessage, Runnable connection) {
         super(jsonMessage, connection);
@@ -31,4 +28,6 @@ public class FastBullyAnswerElectionMessageHandler extends ManagementHandler imp
 
         serverState.addToTemporaryCandidateMap(potentialCandidate);
     }
+
+    private static final Logger logger = LogManager.getLogger(FastBullyAnswerElectionMessageHandler.class);
 }

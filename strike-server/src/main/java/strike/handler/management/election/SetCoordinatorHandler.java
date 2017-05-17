@@ -1,4 +1,4 @@
-package strike.handler.management;
+package strike.handler.management.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,13 +8,10 @@ import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.handler.IProtocolHandler;
 import strike.common.model.ServerInfo;
-import strike.service.BullyElectionManagementService;
+import strike.handler.management.ManagementHandler;
+import strike.service.election.BullyElectionManagementService;
 
-/**
- *
- */
 public class SetCoordinatorHandler extends ManagementHandler implements IProtocolHandler {
-    private static final Logger logger = LogManager.getLogger(SetCoordinatorHandler.class);
 
     public SetCoordinatorHandler(JSONObject jsonMessage, Runnable connection) {
         super(jsonMessage, connection);
@@ -40,7 +37,9 @@ public class SetCoordinatorHandler extends ManagementHandler implements IProtoco
         ServerInfo newCoordinator = new ServerInfo(newCoordinatorId, newCoordinatorAddress, newCoordinatorPort,
                 newCoordinatorManagementPort);
 
-        new BullyElectionManagementService().acceptNewCoordinator(newCoordinator, serverState);
+        new BullyElectionManagementService().acceptNewCoordinator(newCoordinator);
         logger.debug("Accepted new Coordinator : " + newCoordinatorId);
     }
+
+    private static final Logger logger = LogManager.getLogger(SetCoordinatorHandler.class);
 }

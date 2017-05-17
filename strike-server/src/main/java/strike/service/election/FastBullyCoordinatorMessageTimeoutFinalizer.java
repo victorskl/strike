@@ -1,4 +1,4 @@
-package strike.service;
+package strike.service.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,11 +8,7 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.ServerInfo;
 
-/**
- *
- */
 public class FastBullyCoordinatorMessageTimeoutFinalizer extends MessageTimeoutFinalizer {
-    private static final Logger logger = LogManager.getLogger(FastBullyCoordinatorMessageTimeoutFinalizer.class);
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -37,10 +33,9 @@ public class FastBullyCoordinatorMessageTimeoutFinalizer extends MessageTimeoutF
                 // if there are no candidates, start an election
                 try {
                     fastBullyElectionManagementService
-                            .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler(),
-                                    serverState);
+                            .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler());
                     fastBullyElectionManagementService.startElection(serverState.getServerInfo(), serverState
-                            .getCandidateServerInfoList(), serverState.getElectionAnswerTimeout(), serverState);
+                            .getCandidateServerInfoList(), serverState.getElectionAnswerTimeout());
                 } catch (SchedulerException e) {
                     logger.error("Error while trying to restart an election due to timeout while waiting for " +
                             "coordinator :" + e.getLocalizedMessage());
@@ -53,4 +48,6 @@ public class FastBullyCoordinatorMessageTimeoutFinalizer extends MessageTimeoutF
     public Logger getLogger() {
         return logger;
     }
+
+    private static final Logger logger = LogManager.getLogger(FastBullyCoordinatorMessageTimeoutFinalizer.class);
 }

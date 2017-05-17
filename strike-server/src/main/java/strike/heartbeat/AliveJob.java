@@ -6,12 +6,14 @@ import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.ServerInfo;
 import strike.service.*;
+import strike.service.election.BullyElectionManagementService;
+import strike.service.election.FastBullyElectionManagementService;
 
 public class AliveJob implements Job {
 
-    private final PeerClient peerClient = new PeerClient();
-    private final JSONMessageBuilder messageBuilder = JSONMessageBuilder.getInstance();
-    private final ServerState serverState = ServerState.getInstance();
+    private ServerState serverState = ServerState.getInstance();
+    private JSONMessageBuilder messageBuilder = JSONMessageBuilder.getInstance();
+    private PeerClient peerClient = new PeerClient();
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -50,8 +52,7 @@ public class AliveJob implements Job {
                         if (serverState.getIsFastBully()) {
                             try {
                                 new FastBullyElectionManagementService().startElection(serverState.getServerInfo(),
-                                        serverState.getCandidateServerInfoList(), serverState.getElectionAnswerTimeout(),
-                                        serverState);
+                                        serverState.getCandidateServerInfoList(), serverState.getElectionAnswerTimeout());
                             } catch (SchedulerException e) {
                                 logger.error("Unable to start the election : " + e.getLocalizedMessage());
                             }

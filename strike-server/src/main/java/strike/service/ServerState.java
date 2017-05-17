@@ -1,7 +1,5 @@
 package strike.service;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import strike.common.model.ServerInfo;
 import strike.model.*;
 
@@ -14,13 +12,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ServerState {
-    private static final Logger logger = LogManager.getLogger(ServerState.class);
 
     private static ServerState instance;
 
-    private ConcurrentHashMap<String,Integer> suspectList;
-    private ConcurrentHashMap<String,Integer> heartbeatCountList;
-    private ConcurrentHashMap<String,Integer> voteSet;
+    private ConcurrentHashMap<String, Integer> suspectList;
+    private ConcurrentHashMap<String, Integer> heartbeatCountList;
+    private ConcurrentHashMap<String, Integer> voteSet;
 
     private ConcurrentMap<String, Integer> aliveMap;
     private ConcurrentMap<String, UserSession> localUserSessions;
@@ -50,8 +47,6 @@ public class ServerState {
     private Long electionCoordinatorTimeout;
     private Long electionNominationTimeout;
 
-//    private Scheduler simpleScheduler;
-
     private ServerState() {
         voteSet = new ConcurrentHashMap<>();
         suspectList = new ConcurrentHashMap<>();
@@ -73,14 +68,6 @@ public class ServerState {
         ongoingElection = new AtomicBoolean(false);
         answerMessageReceived = new AtomicBoolean(false);
         viewMessageReceived = new AtomicBoolean(false);
-//        synchronized (ServerState.class){
-//            SchedulerFactory schedulerFactory = new StdSchedulerFactory();
-//            try {
-//                simpleScheduler = schedulerFactory.getScheduler();
-//            } catch (SchedulerException e) {
-//                logger.error("Error while creating scheduler : " + e.getLocalizedMessage());
-//            }
-//        }
     }
 
     public static synchronized ServerState getInstance() {
@@ -119,15 +106,15 @@ public class ServerState {
         return new ArrayList<>(serverInfoMap.values());
     }
 
-    public void initializeTemporaryCandidateMap(){
+    public void initializeTemporaryCandidateMap() {
         tempCandidateServerInfoMap = new ConcurrentSkipListMap<>();
     }
 
-    public ServerInfo getTopCandidate(){
+    public ServerInfo getTopCandidate() {
         return tempCandidateServerInfoMap.pollFirstEntry().getValue();
     }
 
-    public void resetTemporaryCandidateMap(){
+    public void resetTemporaryCandidateMap() {
         tempCandidateServerInfoMap = new ConcurrentSkipListMap<>();
     }
 
@@ -142,11 +129,11 @@ public class ServerState {
         }
     }
 
-    public ServerInfo getTopCandidateWithoutRemoving(){
+    public ServerInfo getTopCandidateWithoutRemoving() {
         return candidateServerInfoMap.firstEntry().getValue();
     }
 
-    public synchronized List<ServerInfo> getCandidateServerInfoList(){
+    public synchronized List<ServerInfo> getCandidateServerInfoList() {
         return new ArrayList<>(candidateServerInfoMap.values());
     }
 
@@ -190,8 +177,8 @@ public class ServerState {
 */
     }
 
-    public synchronized void setupConnectedServers(){
-        for (ServerInfo server : getServerInfoList()){
+    public synchronized void setupConnectedServers() {
+        for (ServerInfo server : getServerInfoList()) {
             addServer(server);
         }
     }
@@ -203,20 +190,24 @@ public class ServerState {
     public synchronized void removeServerInCountList(String serverId) {
         heartbeatCountList.remove(serverId);
     }
+
     public synchronized void removeServerInSuspectList(String serverId) {
         suspectList.remove(serverId);
     }
 
+    // thread safe, back by concurrency proof data structure
 
+    public ConcurrentHashMap<String, Integer> getVoteSet() {
+        return voteSet;
+    }
 
+    public ConcurrentHashMap<String, Integer> getSuspectList() {
+        return suspectList;
+    }
 
-
-    // thread safe
-    public ConcurrentHashMap<String, Integer> getVoteSet() { return  voteSet; }
-
-    public ConcurrentHashMap<String, Integer> getSuspectList() { return suspectList; }
-
-    public ConcurrentHashMap<String, Integer> getHeartbeatCountList() { return heartbeatCountList; }
+    public ConcurrentHashMap<String, Integer> getHeartbeatCountList() {
+        return heartbeatCountList;
+    }
 
     public ConcurrentMap<String, Integer> getAliveMap() {
         return aliveMap;
@@ -310,7 +301,17 @@ public class ServerState {
         return lockedRoomIdentities.contains(roomId);
     }
 
-    // Utilities
+    public synchronized ServerInfo getCoordinator() {
+        return coordinator;
+    }
+
+    public synchronized void setCoordinator(ServerInfo coordinator) {
+        addServer(coordinator);
+        this.coordinator = coordinator;
+    }
+
+
+    // Utilities TODO refactor to Common Utilities
 
     public boolean isOnline(ServerInfo serverInfo) {
         boolean online = true;
@@ -330,14 +331,9 @@ public class ServerState {
     }
 
 
-    public synchronized ServerInfo getCoordinator() {
-        return coordinator;
-    }
-
-    public synchronized void setCoordinator(ServerInfo coordinator) {
-        addServer(coordinator);
-        this.coordinator = coordinator;
-    }
+    // one time access only
+    // TODO refactor them better, things in ServerState have to be careful with concurrency proof
+    // TODO developer who is not careful enough could access these in different threads
 
     public Long getElectionAnswerTimeout() {
         return electionAnswerTimeout;

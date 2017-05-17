@@ -1,4 +1,4 @@
-package strike.handler.management;
+package strike.handler.management.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -6,13 +6,10 @@ import org.json.simple.JSONObject;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.handler.IProtocolHandler;
-import strike.service.FastBullyElectionManagementService;
+import strike.handler.management.ManagementHandler;
+import strike.service.election.FastBullyElectionManagementService;
 
-/**
- *
- */
 public class FastBullyNominationMessageHandler extends ManagementHandler implements IProtocolHandler {
-    private static final Logger logger = LogManager.getLogger(FastBullyNominationMessageHandler.class);
 
     public FastBullyNominationMessageHandler(JSONObject jsonMessage, Runnable connection) {
         super(jsonMessage, connection);
@@ -27,15 +24,17 @@ public class FastBullyNominationMessageHandler extends ManagementHandler impleme
         // send coordinator to all the lower priority servers
         fastBullyElectionManagementService.sendCoordinatorMessage(serverState.getServerInfo(), serverState
                 .getSubordinateServerInfoList());
-        fastBullyElectionManagementService.acceptNewCoordinator(serverState.getServerInfo(), serverState);
+        fastBullyElectionManagementService.acceptNewCoordinator(serverState.getServerInfo());
 
         try {
             // stop the election
             fastBullyElectionManagementService
-                    .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler(), serverState);
+                    .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler());
         } catch (SchedulerException e) {
             logger.error("Error while stopping the election upon receipt of nomination message : " +
                     e.getLocalizedMessage());
         }
     }
+
+    private static final Logger logger = LogManager.getLogger(FastBullyNominationMessageHandler.class);
 }

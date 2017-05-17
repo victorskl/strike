@@ -1,4 +1,4 @@
-package strike.service;
+package strike.service.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,11 +8,7 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.ServerInfo;
 
-/**
- *
- */
 public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinalizer {
-    private static final Logger logger = LogManager.getLogger(FastBullyAnswerMessageTimeoutFinalizer.class);
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -39,10 +35,10 @@ public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinali
             fastBullyElectionManagementService.sendCoordinatorMessage(serverState.getServerInfo(),
                     serverState.getSubordinateServerInfoList());
 
-            fastBullyElectionManagementService.acceptNewCoordinator(serverState.getServerInfo(), serverState);
+            fastBullyElectionManagementService.acceptNewCoordinator(serverState.getServerInfo());
             try {
                 fastBullyElectionManagementService
-                        .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler(), serverState);
+                        .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler());
             } catch (SchedulerException e) {
                 logger.error("Unable to stop the election : " + e.getLocalizedMessage());
             }
@@ -53,4 +49,6 @@ public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinali
     public Logger getLogger() {
         return logger;
     }
+
+    private static final Logger logger = LogManager.getLogger(FastBullyAnswerMessageTimeoutFinalizer.class);
 }

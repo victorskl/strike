@@ -1,23 +1,25 @@
-package strike.service;
+package strike.service.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.*;
 import strike.common.model.ServerInfo;
+import strike.service.JSONMessageBuilder;
+import strike.service.PeerClient;
+import strike.service.ServerState;
 
 import java.util.List;
 
-/**
- *
- */
 public class BullyElectionManagementService {
-    private static final Logger logger = LogManager.getLogger(BullyElectionManagementService.class);
+
     protected JSONMessageBuilder jsonMessageBuilder;
     protected PeerClient peerClient;
+    protected ServerState serverState;
 
     public BullyElectionManagementService() {
         this.jsonMessageBuilder = JSONMessageBuilder.getInstance();
-        peerClient = new PeerClient();
+        this.peerClient = new PeerClient();
+        this.serverState = ServerState.getInstance();
     }
 
     public void startElection(ServerInfo proposingCoordinator, List<ServerInfo> candidatesList, Long
@@ -36,7 +38,8 @@ public class BullyElectionManagementService {
 
     public void startWaitingTimer(String groupId, Scheduler scheduler, Long timeout,
                                   JobDetail jobDetail) throws SchedulerException {
-        logger.debug("Starting the waiting job : " + jobDetail.getKey().getName());
+        logger.debug(String.format("Starting the waiting job [%s] : %s",
+                scheduler.getSchedulerName(), jobDetail.getKey()));
         SimpleTrigger simpleTrigger =
                 (SimpleTrigger) TriggerBuilder.newTrigger()
                         .withIdentity("election_trigger", groupId)
@@ -53,7 +56,6 @@ public class BullyElectionManagementService {
         startWaitingTimer("group_" + proposingCoordinator.getServerId(), scheduler, timeout, coordinatorMsgTimeoutJob);
     }
 
-
     public void startWaitingForAnswerMessage(ServerInfo proposingCoordinator, Scheduler scheduler, Long timeout)
             throws SchedulerException {
         JobDetail answerMsgTimeoutJob =
@@ -69,8 +71,7 @@ public class BullyElectionManagementService {
         peerClient.commPeerOneWay(requestingCandidate, electionAnswerMessage);
     }
 
-    public void setupNewCoordinator(ServerInfo newCoordinator, List<ServerInfo> subordinateServerInfoList,
-                                    ServerState serverState) {
+    public void setupNewCoordinator(ServerInfo newCoordinator, List<ServerInfo> subordinateServerInfoList) {
         logger.debug("Informing subordinates about the new coordinator...");
         // inform subordinates about the new coordinator
         String newCoordinatorServerId = newCoordinator.getServerId();
@@ -83,10 +84,10 @@ public class BullyElectionManagementService {
         peerClient.relaySelectedPeers(subordinateServerInfoList, setCoordinatorMessage);
 
         // accept the new coordinator
-        acceptNewCoordinator(newCoordinator, serverState);
+        acceptNewCoordinator(newCoordinator);
     }
 
-    public void acceptNewCoordinator(ServerInfo newCoordinator, ServerState serverState) {
+    public void acceptNewCoordinator(ServerInfo newCoordinator) {
         serverState.setCoordinator(newCoordinator);
         serverState.setOngoingElection(false);
         serverState.setViewMessageReceived(false);
@@ -95,10 +96,12 @@ public class BullyElectionManagementService {
     }
 
     public void stopWaitingTimer(Scheduler scheduler, JobKey jobKey) throws SchedulerException {
-        logger.debug("Stopping waiting for : " + jobKey.getName());
+        // logger.debug(String.format("Stopping waiting for [%s] : %s", scheduler.getSchedulerName(), jobKey.getName()));
         if (scheduler.checkExists(jobKey)) {
             scheduler.interrupt(jobKey);
             scheduler.deleteJob(jobKey);
+            logger.debug(String.format("Job [%s] get interrupted and deleted from [%s]",
+                    jobKey, scheduler.getSchedulerName()));
         }
     }
 
@@ -121,4 +124,6 @@ public class BullyElectionManagementService {
         stopWaitingForAnswerMessage(stoppingServer, scheduler);
         stopWaitingForCoordinatorMessage(stoppingServer, scheduler);
     }
+
+    private static final Logger logger = LogManager.getLogger(BullyElectionManagementService.class);
 }

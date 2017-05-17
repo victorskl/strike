@@ -1,19 +1,17 @@
-package strike.service;
+package strike.service.election;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
+import strike.service.ServerState;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- *
- */
 public class ElectionCoordinatorMessageTimeoutFinalizer implements Job, InterruptableJob {
-    private static final Logger logger = LogManager.getLogger(ElectionCoordinatorMessageTimeoutFinalizer.class);
-    private final ServerState serverState = ServerState.getInstance();
-    private final AtomicBoolean interrupted = new AtomicBoolean(false);
+
+    private ServerState serverState = ServerState.getInstance();
+    private AtomicBoolean interrupted = new AtomicBoolean(false);
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -42,4 +40,6 @@ public class ElectionCoordinatorMessageTimeoutFinalizer implements Job, Interrup
         logger.debug("Job was interrupted...");
         interrupted.set(true);
     }
+
+    private static final Logger logger = LogManager.getLogger(ElectionCoordinatorMessageTimeoutFinalizer.class);
 }
