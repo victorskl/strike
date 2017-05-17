@@ -46,11 +46,35 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
 
     public void resetWaitingForCoordinatorMessageTimer(JobExecutionContext context, TriggerKey triggerKey, Long timeout) {
         try {
-            Trigger simpleTrigger = TriggerBuilder.newTrigger()
-                    .withIdentity("election_trigger", "group_fast_bully")
-                    .startAt(DateBuilder.futureDate(Math.toIntExact(timeout), DateBuilder.IntervalUnit.SECOND))
-                    .build();
-            context.getScheduler().rescheduleJob(triggerKey, simpleTrigger);
+            JobDetail jobDetail = context.getJobDetail();
+            if (scheduler.checkExists(jobDetail.getKey())) {
+
+                logger.debug(String.format("Job get trigger again [%s]", jobDetail.getKey().getName()));
+                scheduler.triggerJob(jobDetail.getKey());
+
+            } else {
+
+                Trigger simpleTrigger = TriggerBuilder.newTrigger()
+                        .withIdentity("election_trigger", "group_fast_bully")
+                        .startAt(DateBuilder.futureDate(Math.toIntExact(timeout), DateBuilder.IntervalUnit.SECOND))
+                        .build();
+                context.getScheduler().rescheduleJob(triggerKey, simpleTrigger);
+            }
+
+        } catch (ObjectAlreadyExistsException oe) {
+            logger.debug(oe.getLocalizedMessage());
+
+            try {
+
+                JobDetail jobDetail = context.getJobDetail();
+                logger.debug(String.format("Job get trigger again [%s]", jobDetail.getKey().getName()));
+
+                scheduler.triggerJob(jobDetail.getKey());
+
+            } catch (SchedulerException e) {
+                e.printStackTrace();
+            }
+
         } catch (SchedulerException e) {
             e.printStackTrace();
         }
