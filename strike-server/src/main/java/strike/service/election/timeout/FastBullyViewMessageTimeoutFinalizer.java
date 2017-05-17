@@ -1,13 +1,14 @@
-package strike.service.election;
+package strike.service.election.timeout;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.ServerInfo;
+import strike.service.election.FastBullyElectionManagementService;
 
+@DisallowConcurrentExecution
 public class FastBullyViewMessageTimeoutFinalizer extends MessageTimeoutFinalizer {
 
     @Override
@@ -16,15 +17,11 @@ public class FastBullyViewMessageTimeoutFinalizer extends MessageTimeoutFinalize
                 new FastBullyElectionManagementService();
         ServerInfo myServerInfo = serverState.getServerInfo();
         if (!interrupted.get() && !serverState.viewMessageReceived()) {
+
             // a view message was not received
-            try {
-                // stop the election
-                fastBullyElectionManagementService
-                        .stopElection(myServerInfo, new StdSchedulerFactory().getScheduler());
-            } catch (SchedulerException e) {
-                logger.error("Error while stopping the election upon timeout at view message: "
-                        + e.getLocalizedMessage());
-            }
+            // stop the election
+            fastBullyElectionManagementService.stopElection(myServerInfo);
+
 
             // FIX: At boot up time, if we already accepted a leader, it shouldn't proceed these.
             // Otherwise, once timeout happen, these will get executed and overwrite the accepted

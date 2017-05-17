@@ -3,11 +3,9 @@ package strike.handler.management.election;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
-import strike.handler.IProtocolHandler;
 import strike.common.model.ServerInfo;
+import strike.handler.IProtocolHandler;
 import strike.handler.management.ManagementHandler;
 import strike.service.election.BullyElectionManagementService;
 
@@ -37,15 +35,14 @@ public class StartElectionMessageHandler extends ManagementHandler implements IP
                     .replyAnswerForElectionMessage(potentialCandidate, serverState.getServerInfo());
 
             // start a new election among the servers that have a higher priority
-            try {
-                new BullyElectionManagementService()
-                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
-                                serverState.getElectionAnswerTimeout());
-                new BullyElectionManagementService().startWaitingForAnswerMessage(serverState.getServerInfo(),
-                        new StdSchedulerFactory().getScheduler(), serverState.getElectionAnswerTimeout());
-            } catch (SchedulerException e) {
-                logger.error("Unable to start the election : " + e.getLocalizedMessage());
-            }
+
+            new BullyElectionManagementService()
+                    .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
+                            serverState.getElectionAnswerTimeout());
+
+            new BullyElectionManagementService()
+                    .startWaitingForAnswerMessage(serverState.getServerInfo(), serverState.getElectionAnswerTimeout());
+
         }
     }
 

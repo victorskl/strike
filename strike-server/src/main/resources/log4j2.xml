@@ -20,7 +20,23 @@
             <AppenderRef ref="File"/>
         </Root>
 
-        <Logger name="strike" level="INFO"/>
+        <!--<Logger name="strike" level="INFO"/>-->
+
+        <Logger name="strike.StrikeServer" level="DEBUG"/>
+
+        <!-- Debug Gossip -->
+
+        <Logger name="strike.heartbeat" level="DEBUG"/>
+        <Logger name="strike.handler.management.consensus" level="DEBUG"/>
+        <Logger name="strike.handler.management.gossip" level="DEBUG"/>
+
+        <!-- Debug Bully -->
+
+        <Logger name="strike.handler.management.election" level="DEBUG"/>
+        <Logger name="strike.service.election" level="DEBUG"/>
+
+        <!-- others -->
+        <!--<Logger name="org.quartz" level="INFO"/>-->
 
     </Loggers>
 

@@ -3,8 +3,6 @@ package strike.handler.management.election;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.handler.IProtocolHandler;
 import strike.handler.management.ManagementHandler;
 import strike.service.election.FastBullyElectionManagementService;
@@ -22,18 +20,14 @@ public class FastBullyNominationMessageHandler extends ManagementHandler impleme
                 new FastBullyElectionManagementService();
 
         // send coordinator to all the lower priority servers
-        fastBullyElectionManagementService.sendCoordinatorMessage(serverState.getServerInfo(), serverState
-                .getSubordinateServerInfoList());
+        fastBullyElectionManagementService.sendCoordinatorMessage(
+                serverState.getServerInfo(),
+                serverState.getSubordinateServerInfoList());
+
         fastBullyElectionManagementService.acceptNewCoordinator(serverState.getServerInfo());
 
-        try {
-            // stop the election
-            fastBullyElectionManagementService
-                    .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler());
-        } catch (SchedulerException e) {
-            logger.error("Error while stopping the election upon receipt of nomination message : " +
-                    e.getLocalizedMessage());
-        }
+        // stop the election
+        fastBullyElectionManagementService.stopElection(serverState.getServerInfo());
     }
 
     private static final Logger logger = LogManager.getLogger(FastBullyNominationMessageHandler.class);

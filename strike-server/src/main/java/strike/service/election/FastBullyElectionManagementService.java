@@ -3,17 +3,19 @@ package strike.service.election;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.quartz.*;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.ServerInfo;
+import strike.service.election.timeout.FastBullyAnswerMessageTimeoutFinalizer;
+import strike.service.election.timeout.FastBullyCoordinatorMessageTimeoutFinalizer;
+import strike.service.election.timeout.FastBullyNominationMessageTimeoutFinalizer;
+import strike.service.election.timeout.FastBullyViewMessageTimeoutFinalizer;
 
 import java.util.List;
 
 public class FastBullyElectionManagementService extends BullyElectionManagementService {
 
-    public void startElection(ServerInfo proposingCoordinator, List<ServerInfo> candidatesList,
-                              Long electionAnswerTimeout) throws SchedulerException {
+    public void startElection(ServerInfo proposingCoordinator, List<ServerInfo> candidatesList, Long electionAnswerTimeout) {
 
-        logger.debug("Starting Fast-Bully Election...");
+        // logger.debug("Starting Fast-Bully Election...");
 
         serverState.initializeTemporaryCandidateMap();
         serverState.setAnswerMessageReceived(false);
@@ -21,91 +23,92 @@ public class FastBullyElectionManagementService extends BullyElectionManagementS
 
         super.startElection(proposingCoordinator, candidatesList, electionAnswerTimeout);
 
-        startWaitingForFastBullyAnswerMessage(new StdSchedulerFactory().getScheduler(),
-                electionAnswerTimeout);
+        startWaitingForFastBullyAnswerMessage(electionAnswerTimeout);
     }
 
-    public void startWaitingForFastBullyAnswerMessage(Scheduler scheduler, Long timeout)
-            throws SchedulerException {
+    public void startWaitingForFastBullyAnswerMessage(Long timeout) {
         JobDetail answerMsgTimeoutJob =
                 JobBuilder.newJob(FastBullyAnswerMessageTimeoutFinalizer.class).withIdentity
                         ("answer_msg_timeout_job", "group_fast_bully").build();
-        startWaitingTimer("group_fast_bully", scheduler, timeout, answerMsgTimeoutJob);
+        startWaitingTimer("group_fast_bully", timeout, answerMsgTimeoutJob);
     }
 
-    public void setAnswerReceivedFlag(Scheduler scheduler) throws SchedulerException {
-        JobKey fastBullyAnswerTimeoutJobKey = new JobKey("answer_msg_timeout_job", "group_fast_bully");
-        if (scheduler.checkExists(fastBullyAnswerTimeoutJobKey)) {
-            scheduler.interrupt(fastBullyAnswerTimeoutJobKey);
+    public void setAnswerReceivedFlag() {
+        try {
+            JobKey fastBullyAnswerTimeoutJobKey = new JobKey("answer_msg_timeout_job", "group_fast_bully");
+            if (scheduler.checkExists(fastBullyAnswerTimeoutJobKey)) {
+                scheduler.interrupt(fastBullyAnswerTimeoutJobKey);
+            }
+        } catch (SchedulerException e) {
+            e.printStackTrace();
         }
     }
 
-    public void resetWaitingForCoordinatorMessageTimer(JobExecutionContext context, TriggerKey triggerKey,
-                                                       Long timeout) throws
-            SchedulerException {
-        Trigger simpleTrigger = TriggerBuilder.newTrigger()
-                .withIdentity("election_trigger", "group_fast_bully")
-                .startAt(DateBuilder.futureDate(Math.toIntExact(timeout), DateBuilder.IntervalUnit.SECOND))
-                .build();
-        context.getScheduler().rescheduleJob(triggerKey, simpleTrigger);
+    public void resetWaitingForCoordinatorMessageTimer(JobExecutionContext context, TriggerKey triggerKey, Long timeout) {
+        try {
+            Trigger simpleTrigger = TriggerBuilder.newTrigger()
+                    .withIdentity("election_trigger", "group_fast_bully")
+                    .startAt(DateBuilder.futureDate(Math.toIntExact(timeout), DateBuilder.IntervalUnit.SECOND))
+                    .build();
+            context.getScheduler().rescheduleJob(triggerKey, simpleTrigger);
+        } catch (SchedulerException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void startWaitingForNominationOrCoordinationMessage(Scheduler scheduler, Long timeout) throws
-            SchedulerException {
+    public void startWaitingForNominationOrCoordinationMessage(Long timeout) {
         JobDetail coordinatorMsgTimeoutJob =
                 JobBuilder.newJob(FastBullyNominationMessageTimeoutFinalizer.class).withIdentity
                         ("coordinator_or_nomination_msg_timeout_job", "group_fast_bully").build();
-        startWaitingTimer("group_fast_bully", scheduler, timeout, coordinatorMsgTimeoutJob);
+        startWaitingTimer("group_fast_bully", timeout, coordinatorMsgTimeoutJob);
     }
 
-    public void startWaitingForCoordinatorMessage(Scheduler scheduler, Long timeout)
-            throws SchedulerException {
+    public void startWaitingForCoordinatorMessage(Long timeout) {
         JobDetail coordinatorMsgTimeoutJob =
                 JobBuilder.newJob(FastBullyCoordinatorMessageTimeoutFinalizer.class).withIdentity
                         ("coordinator_msg_timeout_job", "group_fast_bully").build();
-        startWaitingTimer("group_fast_bully", scheduler, timeout, coordinatorMsgTimeoutJob);
+        startWaitingTimer("group_fast_bully", timeout, coordinatorMsgTimeoutJob);
     }
 
     /**
      * This is Boot time only election timer job.
      */
-    public void startWaitingForViewMessage(Scheduler scheduler, Long electionAnswerTimeout) throws SchedulerException {
+    public void startWaitingForViewMessage(Long electionAnswerTimeout) throws SchedulerException {
         JobDetail coordinatorMsgTimeoutJob =
                 JobBuilder.newJob(FastBullyViewMessageTimeoutFinalizer.class).withIdentity
                         ("view_msg_timeout_job", "group_fast_bully").build();
-        startWaitingTimer("group_fast_bully", scheduler, electionAnswerTimeout, coordinatorMsgTimeoutJob);
+        startWaitingTimer("group_fast_bully", electionAnswerTimeout, coordinatorMsgTimeoutJob);
     }
 
-    public void stopElection(ServerInfo stoppingServer, Scheduler scheduler)
-            throws SchedulerException {
+    public void stopElection(ServerInfo stoppingServer) {
 
         serverState.resetTemporaryCandidateMap();
         serverState.setOngoingElection(false);
 
-        stopWaitingForAnswerMessage(scheduler);
-        stopWaitingForCoordinatorMessage(scheduler);
-        stopWaitingForNominationMessage(scheduler);
+        stopWaitingForAnswerMessage();
+        stopWaitingForCoordinatorMessage();
+        stopWaitingForNominationMessage();
+        stopWaitingForViewMessage();
     }
 
-    public void stopWaitingForAnswerMessage(Scheduler scheduler) throws SchedulerException {
+    public void stopWaitingForAnswerMessage() {
         JobKey answerMsgTimeoutJobKey = new JobKey("answer_msg_timeout_job", "group_fast_bully");
-        stopWaitingTimer(scheduler, answerMsgTimeoutJobKey);
+        stopWaitingTimer(answerMsgTimeoutJobKey);
     }
 
-    public void stopWaitingForNominationMessage(Scheduler scheduler) throws SchedulerException {
+    public void stopWaitingForNominationMessage() {
         JobKey answerMsgTimeoutJobKey = new JobKey("coordinator_or_nomination_msg_timeout_job", "group_fast_bully");
-        stopWaitingTimer(scheduler, answerMsgTimeoutJobKey);
+        stopWaitingTimer(answerMsgTimeoutJobKey);
     }
 
-    public void stopWaitingForCoordinatorMessage(Scheduler scheduler)
-            throws SchedulerException {
+    public void stopWaitingForCoordinatorMessage() {
         JobKey coordinatorMsgTimeoutJobKey = new JobKey("coordinator_msg_timeout_job", "group_fast_bully");
-        stopWaitingTimer(scheduler, coordinatorMsgTimeoutJobKey);
+        stopWaitingTimer(coordinatorMsgTimeoutJobKey);
     }
 
-    public void stopWaitingForViewMessage(Scheduler scheduler) throws SchedulerException {
+    public void stopWaitingForViewMessage() {
         JobKey viewMsgTimeoutJobKey = new JobKey("view_msg_timeout_job", "group_fast_bully");
-        stopWaitingTimer(scheduler, viewMsgTimeoutJobKey);
+        stopWaitingTimer(viewMsgTimeoutJobKey);
     }
 
     public void sendIamUpMessage(ServerInfo serverInfo, List<ServerInfo> serverInfoList) {

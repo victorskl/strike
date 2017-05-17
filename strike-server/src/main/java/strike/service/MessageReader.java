@@ -55,7 +55,8 @@ public class MessageReader implements Runnable {
                  */
                 //ioe.printStackTrace();
             } else {
-                ioe.printStackTrace();
+                //ioe.printStackTrace();
+				logger.warn(ioe.getLocalizedMessage());
             }
 		}
 	}

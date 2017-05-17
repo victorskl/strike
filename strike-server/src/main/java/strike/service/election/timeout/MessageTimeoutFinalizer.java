@@ -1,9 +1,7 @@
-package strike.service.election;
+package strike.service.election.timeout;
 
 import org.apache.logging.log4j.Logger;
-import org.quartz.InterruptableJob;
-import org.quartz.Job;
-import org.quartz.UnableToInterruptJobException;
+import org.quartz.*;
 import strike.service.ServerState;
 
 import java.util.concurrent.atomic.AtomicBoolean;

@@ -1,13 +1,14 @@
-package strike.service.election;
+package strike.service.election.timeout;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.ServerInfo;
+import strike.service.election.FastBullyElectionManagementService;
 
+@DisallowConcurrentExecution
 public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinalizer {
 
     @Override
@@ -20,14 +21,8 @@ public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinali
             ServerInfo topCandidate = serverState.getTopCandidate();
             fastBullyElectionManagementService.sendNominationMessage(topCandidate);
             logger.debug("Answer message received. Sending nomination to : " + topCandidate.getServerId());
-            try {
-                fastBullyElectionManagementService
-                        .startWaitingForCoordinatorMessage(new StdSchedulerFactory().getScheduler(),
-                                serverState.getElectionCoordinatorTimeout());
-            } catch (SchedulerException e) {
-                logger.error("Error while starting the timer for waiting for coordinator message : " +
-                        e.getLocalizedMessage());
-            }
+            fastBullyElectionManagementService
+                    .startWaitingForCoordinatorMessage(serverState.getElectionCoordinatorTimeout());
             serverState.setAnswerMessageReceived(false);
         } else {
             // answer messages were not received
@@ -36,12 +31,7 @@ public class FastBullyAnswerMessageTimeoutFinalizer extends MessageTimeoutFinali
                     serverState.getSubordinateServerInfoList());
 
             fastBullyElectionManagementService.acceptNewCoordinator(serverState.getServerInfo());
-            try {
-                fastBullyElectionManagementService
-                        .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler());
-            } catch (SchedulerException e) {
-                logger.error("Unable to stop the election : " + e.getLocalizedMessage());
-            }
+            fastBullyElectionManagementService.stopElection(serverState.getServerInfo());
         }
     }
 

@@ -3,9 +3,9 @@ package strike.service;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import strike.common.model.Protocol;
+import strike.common.model.ServerInfo;
 import strike.model.ChatRoomInfo;
 import strike.model.LocalChatRoomInfo;
-import strike.common.model.ServerInfo;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -14,7 +14,10 @@ import java.util.stream.Collectors;
 public class JSONMessageBuilder {
 
     private static JSONMessageBuilder instance = null;
-    private JSONMessageBuilder() {}
+
+    private JSONMessageBuilder() {
+    }
+
     public static synchronized JSONMessageBuilder getInstance() {
         if (instance == null) instance = new JSONMessageBuilder();
         return instance;
@@ -142,7 +145,7 @@ public class JSONMessageBuilder {
         return jj.toJSONString();
     }
 
-    public String listServers(){
+    public String listServers() {
 /*
         {
             "type":"serverlist", "servers": [
@@ -158,7 +161,7 @@ public class JSONMessageBuilder {
 
         JSONArray ja = new JSONArray();
 
-        for (ServerInfo server : serverState.getServerInfoList()){
+        for (ServerInfo server : serverState.getServerInfoList()) {
             if (serverState.isOnline(server)) {
                 JSONObject jo = new JSONObject();
                 jo.put(Protocol.serverid.toString(), server.getServerId());
@@ -289,7 +292,7 @@ public class JSONMessageBuilder {
     }
 
     public String startElectionMessage(String serverId, String serverAddress, Long serverPort, Long
-            serverManagementPort){
+            serverManagementPort) {
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.startelection.toString());
         jj.put(Protocol.serverid.toString(), serverId);
@@ -300,7 +303,7 @@ public class JSONMessageBuilder {
     }
 
     public String electionAnswerMessage(String serverId, String serverAddress, Integer serverPort, Integer
-            serverManagementPort){
+            serverManagementPort) {
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.answerelection.toString());
         jj.put(Protocol.serverid.toString(), serverId);
@@ -311,7 +314,7 @@ public class JSONMessageBuilder {
     }
 
     public String setCoordinatorMessage(String serverId, String serverAddress, Integer serverPort, Integer
-            serverManagementPort){
+            serverManagementPort) {
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.coordinator.toString());
         jj.put(Protocol.serverid.toString(), serverId);
@@ -321,7 +324,8 @@ public class JSONMessageBuilder {
         return jj.toJSONString();
     }
 
-    public String gossipMessage(String serverId, HashMap<String, Integer> heartbeatCountList){
+    public String gossipMessage(String serverId, HashMap<String, Integer> heartbeatCountList) {
+        // {"type":"gossip","serverid":"1","heartbeatcountlist":{"1":0,"2":1,"3":1,"4":2}}
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.gossip.toString());
         jj.put(Protocol.serverid.toString(), serverId);
@@ -329,7 +333,7 @@ public class JSONMessageBuilder {
         return jj.toJSONString();
     }
 
-    public String startVoteMessage(String serverId, String suspectServerId){
+    public String startVoteMessage(String serverId, String suspectServerId) {
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.startvote.toString());
         jj.put(Protocol.serverid.toString(), serverId);
@@ -337,16 +341,19 @@ public class JSONMessageBuilder {
         return jj.toJSONString();
     }
 
-    public String answerVoteMessage(String serverId, String vote){
+    public String answerVoteMessage(String suspectServerId, String vote, String votedBy){
+        // {"type":"answervote","suspectserverid":"1","vote":"YES", "votedby":"1"}
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.answervote.toString());
-        jj.put(Protocol.serverid.toString(), serverId);
+        jj.put(Protocol.suspectserverid.toString(), suspectServerId);
+        jj.put(Protocol.votedby.toString(), votedBy);
         jj.put(Protocol.vote.toString(), vote);
         return jj.toJSONString();
     }
 
     public String iAmUpMessage(String serverId, String serverAddress, Integer serverPort, Integer
-            serverManagementPort){
+            serverManagementPort) {
+        // {"type":"iamup", "serverid":"1", "address":"localhost", "port":"4444", "managementport":"5555"}
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.iamup.toString());
         jj.put(Protocol.serverid.toString(), serverId);
@@ -357,7 +364,9 @@ public class JSONMessageBuilder {
     }
 
     public String viewMessage(String coordinatorId, String coordinatorAddress, Integer coordinatorPort, Integer
-            coordinatorManagementPort){
+            coordinatorManagementPort) {
+        // {"type":"viewelection", "currentcoordinatorid":"1", "currentcoordinatoraddress":"localhost",
+        //      "currentcoordinatorport":"4444", "currentcoordinatormanagementport":"5555"}
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.viewelection.toString());
         jj.put(Protocol.currentcoordinatorid.toString(), coordinatorId);
@@ -367,7 +376,7 @@ public class JSONMessageBuilder {
         return jj.toJSONString();
     }
 
-    public String nominationMessage(){
+    public String nominationMessage() {
         JSONObject jj = new JSONObject();
         jj.put(Protocol.type.toString(), Protocol.nominationelection.toString());
         return jj.toJSONString();

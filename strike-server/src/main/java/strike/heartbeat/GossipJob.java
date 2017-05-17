@@ -2,9 +2,12 @@ package strike.heartbeat;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.quartz.*;
-import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.Job;
+import org.quartz.JobDataMap;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import strike.common.model.ServerInfo;
+import strike.model.Lingo;
 import strike.service.JSONMessageBuilder;
 import strike.service.PeerClient;
 import strike.service.ServerState;
@@ -12,7 +15,9 @@ import strike.service.election.BullyElectionManagementService;
 import strike.service.election.FastBullyElectionManagementService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class GossipJob implements Job {
@@ -54,9 +59,9 @@ public class GossipJob implements Job {
             if (count != null) {
                 // if heart beat count is more than error factor
                 if (count > Integer.parseInt(aliveErrorFactor)) {
-                    serverState.getSuspectList().put(serverId, 1); // 1 = true = suspected
+                    serverState.getSuspectList().put(serverId, Lingo.Gossip.SUSPECTED); // 1 = true = suspected
                 } else {
-                    serverState.getSuspectList().put(serverId, 0); // 0 = false = not-suspected
+                    serverState.getSuspectList().put(serverId, Lingo.Gossip.NOT_SUSPECTED); // 0 = false = not-suspected
                 }
             }
         }
@@ -66,33 +71,31 @@ public class GossipJob implements Job {
         if (null != serverState.getCoordinator()) {
 
             String leaderServerId = serverState.getCoordinator().getServerId();
-
             logger.debug("Current coordinator is : " + leaderServerId);
 
             // if the leader/coordinator server is in suspect list, start the election process
-            if (serverState.getSuspectList().get(leaderServerId) == 1) {
+            if (serverState.getSuspectList().get(leaderServerId) == Lingo.Gossip.SUSPECTED) {
+
 
                 // send the start election message to every server with a higher priority
                 if (serverState.getIsFastBully()) {
-                    try {
-                        new FastBullyElectionManagementService().startElection(serverState.getServerInfo(),
-                                serverState.getCandidateServerInfoList(), serverState.getElectionAnswerTimeout());
-                    } catch (SchedulerException e) {
-                        logger.error("Unable to start the election : " + e.getLocalizedMessage());
-                    }
-                } else {
-                    try {
-                        new BullyElectionManagementService()
-                                .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
-                                        serverState.getElectionAnswerTimeout());
-                        new BullyElectionManagementService().startWaitingForAnswerMessage(serverState.getServerInfo(),
-                                StdSchedulerFactory.getDefaultScheduler(), serverState.getElectionAnswerTimeout());
-                    } catch (SchedulerException e) {
-                        logger.error("Unable to start the default bully election : "
-                                + e.getLocalizedMessage());
-                    }
-                }
 
+                    new FastBullyElectionManagementService().startElection(
+                            serverState.getServerInfo(),
+                            serverState.getCandidateServerInfoList(),
+                            serverState.getElectionAnswerTimeout());
+
+                } else {
+
+                    new BullyElectionManagementService().startElection(
+                            serverState.getServerInfo(),
+                            serverState.getCandidateServerInfoList(),
+                            serverState.getElectionAnswerTimeout());
+
+                    new BullyElectionManagementService().startWaitingForAnswerMessage(
+                            serverState.getServerInfo(), serverState.getElectionAnswerTimeout());
+
+                }
             }
         }
 
@@ -112,8 +115,8 @@ public class GossipJob implements Job {
                     remoteServer.add(serverId);
                 }
             }
+            Collections.shuffle(remoteServer, new Random(System.nanoTime())); // another way of randomize the list
 
-            // build json msg, send commpeeroneway
             // change concurrent hashmap to hashmap before sending
             HashMap<String, Integer> heartbeatCountList = new HashMap<>(serverState.getHeartbeatCountList());
             String gossipMessage = jsonMessageBuilder.gossipMessage(serverState.getServerInfo().getServerId(), heartbeatCountList);

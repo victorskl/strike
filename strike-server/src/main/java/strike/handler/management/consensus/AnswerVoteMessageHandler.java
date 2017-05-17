@@ -6,7 +6,7 @@ import org.json.simple.JSONObject;
 import strike.common.model.Protocol;
 import strike.handler.IProtocolHandler;
 import strike.handler.management.ManagementHandler;
-import strike.handler.management.election.StartElectionMessageHandler;
+import strike.model.Lingo;
 
 public class AnswerVoteMessageHandler extends ManagementHandler implements IProtocolHandler {
 
@@ -17,24 +17,23 @@ public class AnswerVoteMessageHandler extends ManagementHandler implements IProt
     @Override
     public void handle() {
 
+        String suspectServerId = (String) jsonMessage.get(Protocol.suspectserverid.toString());
+        String votedBy = (String) jsonMessage.get(Protocol.votedby.toString());
         String vote = (String) jsonMessage.get(Protocol.vote.toString());
-        Integer voteCount = serverState.getVoteSet().get(vote);
 
-        logger.debug("Receiving voting message: " + jsonMessage);
+        Lingo.Consensus C = Lingo.Consensus.valueOf(vote);
+        Integer voteCount = serverState.getVoteSet().get(C);
+
+        logger.debug(String.format("Receiving voting to kick [%s]: [%s] voted by server: [%s]",
+                suspectServerId, vote, votedBy));
 
         if (voteCount == null) {
-            serverState.getVoteSet().put(vote, 1);
+            serverState.getVoteSet().put(C, 1);
         } else {
-            serverState.getVoteSet().put(vote, voteCount + 1);
+            serverState.getVoteSet().put(C, voteCount + 1);
         }
-
-//        for (String vote : serverState.getVoteSet().keySet()) {
-//            Integer voteCount = serverState.getVoteSet().get(vote);
-//
-//        }
-
     }
 
-    private static final Logger logger = LogManager.getLogger(StartElectionMessageHandler.class);
+    private static final Logger logger = LogManager.getLogger(AnswerVoteMessageHandler.class);
 }
 

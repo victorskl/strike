@@ -3,8 +3,6 @@ package strike.handler.management.election;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.common.model.ServerInfo;
 import strike.handler.IProtocolHandler;
@@ -20,7 +18,9 @@ public class FastBullyViewMessageHandler extends ManagementHandler implements IP
 
     @Override
     public void handle() {
+
         serverState.setViewMessageReceived(true);
+
         String currentCoordinatorId = (String) jsonMessage.get(Protocol.currentcoordinatorid.toString());
         String coordinatorAddress = (String) jsonMessage.get(Protocol.currentcoordinatoraddress.toString());
         Integer coordinatorPort =
@@ -37,27 +37,31 @@ public class FastBullyViewMessageHandler extends ManagementHandler implements IP
 
         ServerInfo myServerInfo = serverState.getServerInfo();
         String myServerId = myServerInfo.getServerId();
+
         // if the current coordinator has lower priority than me
         if (new ServerPriorityComparator().compare(myServerId, currentCoordinatorId) < 0) {
+
             // send new coordinator to lower priority processes
             fastBullyElectionManagementService.sendCoordinatorMessage(myServerInfo,
                     serverState.getSubordinateServerInfoList());
             fastBullyElectionManagementService.acceptNewCoordinator(myServerInfo);
+
         } else if (new ServerPriorityComparator().compare(myServerId, currentCoordinatorId) > 0) {
+
             // accept the new coordinator
             fastBullyElectionManagementService.acceptNewCoordinator(currentCoordinator);
+
         } else {
+
             // i am the existing coordinator
-            fastBullyElectionManagementService.sendCoordinatorMessage(myServerInfo, serverState
-                    .getSubordinateServerInfoList());
+            fastBullyElectionManagementService
+                    .sendCoordinatorMessage(myServerInfo, serverState.getSubordinateServerInfoList());
+
             fastBullyElectionManagementService.acceptNewCoordinator(myServerInfo);
         }
+
         // stop the election
-        try {
-            fastBullyElectionManagementService.stopWaitingForViewMessage(new StdSchedulerFactory().getScheduler());
-        } catch (SchedulerException e) {
-            logger.error("Error while stopping the election : " + e.getLocalizedMessage());
-        }
+        fastBullyElectionManagementService.stopWaitingForViewMessage();
     }
 
     private static final Logger logger = LogManager.getLogger(FastBullyViewMessageHandler.class);

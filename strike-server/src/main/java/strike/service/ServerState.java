@@ -15,9 +15,9 @@ public class ServerState {
 
     private static ServerState instance;
 
-    private ConcurrentHashMap<String, Integer> suspectList;
+    private ConcurrentHashMap<String, Lingo.Gossip> suspectList;
     private ConcurrentHashMap<String, Integer> heartbeatCountList;
-    private ConcurrentHashMap<String, Integer> voteSet;
+    private ConcurrentHashMap<Lingo.Consensus, Integer> voteSet;
 
     private ConcurrentMap<String, Integer> aliveMap;
     private ConcurrentMap<String, UserSession> localUserSessions;
@@ -37,7 +37,7 @@ public class ServerState {
     // elected coordinator for the server cluster
     private ServerInfo coordinator;
 
-    private AtomicBoolean stopRunning = new AtomicBoolean(false);
+    private AtomicBoolean stopRunning;
 
     private AtomicBoolean isFastBully;
     private AtomicBoolean ongoingElection;
@@ -46,6 +46,8 @@ public class ServerState {
     private Long electionAnswerTimeout;
     private Long electionCoordinatorTimeout;
     private Long electionNominationTimeout;
+
+    private AtomicBoolean ongoingConsensus;
 
     private ServerState() {
         voteSet = new ConcurrentHashMap<>();
@@ -68,6 +70,8 @@ public class ServerState {
         ongoingElection = new AtomicBoolean(false);
         answerMessageReceived = new AtomicBoolean(false);
         viewMessageReceived = new AtomicBoolean(false);
+        stopRunning = new AtomicBoolean(false);
+        ongoingConsensus = new AtomicBoolean(false);
     }
 
     public static synchronized ServerState getInstance() {
@@ -106,19 +110,19 @@ public class ServerState {
         return new ArrayList<>(serverInfoMap.values());
     }
 
-    public void initializeTemporaryCandidateMap() {
+    public synchronized void initializeTemporaryCandidateMap() {
         tempCandidateServerInfoMap = new ConcurrentSkipListMap<>();
     }
 
-    public ServerInfo getTopCandidate() {
+    public synchronized ServerInfo getTopCandidate() {
         return tempCandidateServerInfoMap.pollFirstEntry().getValue();
     }
 
-    public void resetTemporaryCandidateMap() {
+    public synchronized void resetTemporaryCandidateMap() {
         tempCandidateServerInfoMap = new ConcurrentSkipListMap<>();
     }
 
-    public void addToTemporaryCandidateMap(ServerInfo serverInfo) {
+    public synchronized void addToTemporaryCandidateMap(ServerInfo serverInfo) {
         ServerInfo me = getServerInfo();
         if (null != serverInfo) {
             if (null != me) {
@@ -129,7 +133,7 @@ public class ServerState {
         }
     }
 
-    public ServerInfo getTopCandidateWithoutRemoving() {
+    public synchronized ServerInfo getTopCandidateWithoutRemoving() {
         return candidateServerInfoMap.firstEntry().getValue();
     }
 
@@ -197,11 +201,11 @@ public class ServerState {
 
     // thread safe, back by concurrency proof data structure
 
-    public ConcurrentHashMap<String, Integer> getVoteSet() {
+    public ConcurrentHashMap<Lingo.Consensus, Integer> getVoteSet() {
         return voteSet;
     }
 
-    public ConcurrentHashMap<String, Integer> getSuspectList() {
+    public ConcurrentHashMap<String, Lingo.Gossip> getSuspectList() {
         return suspectList;
     }
 
@@ -255,6 +259,10 @@ public class ServerState {
 
     public boolean isStopRunning() {
         return stopRunning.get();
+    }
+
+    public AtomicBoolean onGoingConsensus() {
+        return ongoingConsensus;
     }
 
     public void removeRemoteChatRoomsByServerId(String serverId) {
@@ -331,31 +339,27 @@ public class ServerState {
     }
 
 
-    // one time access only
-    // TODO refactor them better, things in ServerState have to be careful with concurrency proof
-    // TODO developer who is not careful enough could access these in different threads
-
-    public Long getElectionAnswerTimeout() {
+    public synchronized Long getElectionAnswerTimeout() {
         return electionAnswerTimeout;
     }
 
-    public void setElectionAnswerTimeout(Long electionAnswerTimeout) {
+    public synchronized void setElectionAnswerTimeout(Long electionAnswerTimeout) {
         this.electionAnswerTimeout = electionAnswerTimeout;
     }
 
-    public Long getElectionCoordinatorTimeout() {
+    public synchronized Long getElectionCoordinatorTimeout() {
         return electionCoordinatorTimeout;
     }
 
-    public void setElectionCoordinatorTimeout(Long electionCoordinatorTimeout) {
+    public synchronized void setElectionCoordinatorTimeout(Long electionCoordinatorTimeout) {
         this.electionCoordinatorTimeout = electionCoordinatorTimeout;
     }
 
-    public Long getElectionNominationTimeout() {
+    public synchronized Long getElectionNominationTimeout() {
         return electionNominationTimeout;
     }
 
-    public void setElectionNominationTimeout(Long electionNominationTimeout) {
+    public synchronized void setElectionNominationTimeout(Long electionNominationTimeout) {
         this.electionNominationTimeout = electionNominationTimeout;
     }
 

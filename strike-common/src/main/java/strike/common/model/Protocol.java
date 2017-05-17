@@ -8,7 +8,7 @@ public enum Protocol {
     movejoin, serverchange, listserver, serverlist, servers, address,
     authenticate, username, password, rememberme, authresponse, success, reason,
     sessionid, notifyusersession, status, alive, managementport, serverup, notifyserverdown,
-    timestamp, gossip, heartbeatcountlist, startvote, answervote, vote, suspectserverid,
+    timestamp, gossip, heartbeatcountlist, startvote, answervote, vote, votedby, suspectserverid,
     startelection, answerelection, coordinator, iamup, viewelection, nominationelection,
     currentcoordinatorid, currentcoordinatoraddress, currentcoordinatorport, currentcoordinatormanagementport
 }

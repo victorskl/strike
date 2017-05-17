@@ -23,12 +23,12 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.quartz.*;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.common.model.ServerInfo;
 import strike.heartbeat.AliveJob;
 import strike.heartbeat.ConsensusJob;
 import strike.heartbeat.GossipJob;
+import strike.model.Constant;
 import strike.model.LocalChatRoomInfo;
 import strike.model.RemoteChatRoomInfo;
 import strike.service.*;
@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -102,7 +103,26 @@ public class StrikeServer {
 
             updateLogger();
 
-            // POST
+            serverState.setIsFastBully(systemProperties.getBoolean("election.fast.bully"));
+            // T2
+            serverState.setElectionAnswerTimeout(systemProperties.getLong("election.answer.timeout"));
+            // T3
+            serverState.setElectionCoordinatorTimeout(systemProperties.getLong("election.coordinator.timeout"));
+            // T4
+            serverState.setElectionNominationTimeout(systemProperties.getLong("election.nomination.timeout"));
+
+            serverState.setupConnectedServers();
+
+
+            // ********************
+            //
+            // POST Boot
+            //
+            //  It is safer to set initial value of ServerState before this line, if any.
+            //  Below this line, comm sub-system will be booted using of at this point ServerState.
+            //
+            // ********************
+
 
             mainHall = "MainHall-" + serverInfo.getServerId();
             LocalChatRoomInfo localChatRoomInfo = new LocalChatRoomInfo();
@@ -115,14 +135,14 @@ public class StrikeServer {
             //addMainHallsStatically();
             syncChatRooms();
 
-            serverState.setupConnectedServers();
-            readElectionTimeoutConfigurations();
             initiateCoordinator();
 
             if (systemProperties.getBoolean("failure.detector.gossip")) {
+                logger.info("Failure Detection is running GOSSIP mode");
                 startGossip();
                 startConsensus();
             } else {
+                logger.info("Failure Detection is running NAIVE mode");
                 startHeartBeat();
             }
 
@@ -134,16 +154,6 @@ public class StrikeServer {
         }
     }
 
-    private void readElectionTimeoutConfigurations() {
-        serverState.setIsFastBully(systemProperties.getBoolean("election.fast.bully"));
-        // T2
-        serverState.setElectionAnswerTimeout(systemProperties.getLong("election.answer.timeout"));
-        // T3
-        serverState.setElectionCoordinatorTimeout(systemProperties.getLong("election.coordinator.timeout"));
-        // T4
-        serverState.setElectionNominationTimeout(systemProperties.getLong("election.nomination.timeout"));
-    }
-
     private void initiateCoordinator() {
         logger.debug("Starting initial coordinator election...");
         if (serverState.getServerInfoList().size() == 1) {
@@ -151,26 +161,28 @@ public class StrikeServer {
             serverState.setCoordinator(serverInfo);
         } else {
             if (serverState.getIsFastBully()) {
+
+                logger.info("Leader Election is running in FAST-BULLY mode");
+
                 new FastBullyElectionManagementService().sendIamUpMessage(serverState.getServerInfo(),
                         serverState.getServerInfoList());
                 try {
-                    serverState.setViewMessageReceived(false);
-                    new FastBullyElectionManagementService().startWaitingForViewMessage(StdSchedulerFactory
-                            .getDefaultScheduler(), serverState.getElectionAnswerTimeout());
+                    //serverState.setViewMessageReceived(false);
+                    new FastBullyElectionManagementService().startWaitingForViewMessage(serverState.getElectionAnswerTimeout());
                 } catch (SchedulerException e) {
                     logger.error("Error while waiting for the view message at fast bully election: " +
                             e.getLocalizedMessage());
                 }
             } else {
-                try {
-                    new BullyElectionManagementService()
-                            .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
-                                    serverState.getElectionAnswerTimeout());
-                    new BullyElectionManagementService().startWaitingForAnswerMessage(serverState.getServerInfo(),
-                            StdSchedulerFactory.getDefaultScheduler(), serverState.getElectionAnswerTimeout());
-                } catch (SchedulerException e) {
-                    logger.error("Unable to start the default bully election : " + e.getLocalizedMessage());
-                }
+
+                logger.info("Leader Election is running in DEFAULT BULLY mode");
+
+                new BullyElectionManagementService()
+                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
+                                serverState.getElectionAnswerTimeout());
+
+                new BullyElectionManagementService().startWaitingForAnswerMessage(serverState.getServerInfo(),
+                        serverState.getElectionAnswerTimeout());
             }
         }
     }
@@ -179,20 +191,19 @@ public class StrikeServer {
         try {
 
             JobDetail consensusJob = JobBuilder.newJob(ConsensusJob.class)
-                    .withIdentity("ConsensusJob", "group1").build();
+                    .withIdentity(Constant.CONSENSUS_JOB, "group1").build();
 
             consensusJob.getJobDataMap().put("consensusVoteDuration", systemProperties.getInt("consensus.vote.duration"));
 
-
             Trigger consensusTrigger = TriggerBuilder
                     .newTrigger()
-                    .withIdentity("consensusJobTrigger", "group1")
+                    .withIdentity(Constant.CONSENSUS_JOB_TRIGGER, "group1")
                     .withSchedule(
                             SimpleScheduleBuilder.simpleSchedule()
                                     .withIntervalInSeconds(systemProperties.getInt("consensus.interval")).repeatForever())
                     .build();
 
-            Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+            Scheduler scheduler = Quartz.getInstance().getScheduler();
 
             scheduler.start();
             scheduler.scheduleJob(consensusJob, consensusTrigger);
@@ -206,19 +217,19 @@ public class StrikeServer {
         try {
 
             JobDetail gossipJob = JobBuilder.newJob(GossipJob.class)
-                    .withIdentity("GossipJob", "group1").build();
+                    .withIdentity(Constant.GOSSIP_JOB, "group1").build();
 
             gossipJob.getJobDataMap().put("aliveErrorFactor", systemProperties.getInt("alive.error.factor"));
 
             Trigger gossipTrigger = TriggerBuilder
                     .newTrigger()
-                    .withIdentity("aliveJobTrigger", "group1")
+                    .withIdentity(Constant.GOSSIP_JOB_TRIGGER, "group1")
                     .withSchedule(
                             SimpleScheduleBuilder.simpleSchedule()
                                     .withIntervalInSeconds(systemProperties.getInt("alive.interval")).repeatForever())
                     .build();
 
-            Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+            Scheduler scheduler = Quartz.getInstance().getScheduler();
             scheduler.start();
             scheduler.scheduleJob(gossipJob, gossipTrigger);
 
@@ -231,19 +242,19 @@ public class StrikeServer {
         try {
 
             JobDetail aliveJob = JobBuilder.newJob(AliveJob.class)
-                    .withIdentity("AliveJob", "group1").build();
+                    .withIdentity(Constant.ALIVE_JOB, "group1").build();
 
             aliveJob.getJobDataMap().put("aliveErrorFactor", systemProperties.getInt("alive.error.factor"));
 
             Trigger aliveTrigger = TriggerBuilder
                     .newTrigger()
-                    .withIdentity("AliveJobTrigger", "group1")
+                    .withIdentity(Constant.ALIVE_JOB_TRIGGER, "group1")
                     .withSchedule(
                             SimpleScheduleBuilder.simpleSchedule()
                                     .withIntervalInSeconds(systemProperties.getInt("alive.interval")).repeatForever())
                     .build();
 
-            Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+            Scheduler scheduler = Quartz.getInstance().getScheduler();
             scheduler.start();
             scheduler.scheduleJob(aliveJob, aliveTrigger);
 
@@ -267,17 +278,26 @@ public class StrikeServer {
     private void updateLogger() {
         LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         org.apache.logging.log4j.core.config.Configuration config = ctx.getConfiguration();
-        LoggerConfig loggerConfig = config.getLoggerConfig("strike");
 
-        if (debug && !trace) {
-            loggerConfig.setLevel(Level.DEBUG);
-            ctx.updateLoggers();
-            logger.debug("Server is running in DEBUG mode");
+        for (Map.Entry entry : config.getLoggers().entrySet()) {
+            String name = (String) entry.getKey();
+            if (name.startsWith("strike")) {
+                LoggerConfig loggerConfig = (LoggerConfig) entry.getValue();
+                if (debug && !trace) {
+                    loggerConfig.setLevel(Level.DEBUG);
+                    ctx.updateLoggers();
+                }
+
+                if (trace) {
+                    loggerConfig.setLevel(Level.TRACE);
+                    ctx.updateLoggers();
+                }
+            }
         }
 
-        if (trace) {
-            loggerConfig.setLevel(Level.TRACE);
-            ctx.updateLoggers();
+        if (debug && !trace) {
+            logger.debug("Server is running in DEBUG mode");
+        } else {
             logger.trace("Server is running in TRACE mode");
         }
     }

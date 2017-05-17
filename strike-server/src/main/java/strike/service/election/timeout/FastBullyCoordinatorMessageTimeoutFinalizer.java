@@ -1,13 +1,14 @@
-package strike.service.election;
+package strike.service.election.timeout;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.ServerInfo;
+import strike.service.election.FastBullyElectionManagementService;
 
+@DisallowConcurrentExecution
 public class FastBullyCoordinatorMessageTimeoutFinalizer extends MessageTimeoutFinalizer {
 
     @Override
@@ -17,29 +18,36 @@ public class FastBullyCoordinatorMessageTimeoutFinalizer extends MessageTimeoutF
             // so get the next top candidate and send a nomination request
             FastBullyElectionManagementService fastBullyElectionManagementService =
                     new FastBullyElectionManagementService();
-            ServerInfo topCandidate = serverState.getTopCandidate();
-            if (null != topCandidate) {
-                // if there's a candidate
-                fastBullyElectionManagementService.sendNominationMessage(topCandidate);
-                try {
+
+            try {
+
+                ServerInfo topCandidate = serverState.getTopCandidate();
+
+                if (null != topCandidate) {
+                    // if there's a candidate
+                    fastBullyElectionManagementService.sendNominationMessage(topCandidate);
+
                     // reset the timer to trigger the timeout
                     fastBullyElectionManagementService
                             .resetWaitingForCoordinatorMessageTimer(context, context.getTrigger().getKey(),
                                     serverState.getElectionCoordinatorTimeout());
-                } catch (SchedulerException e) {
-                    logger.error("Unable to reset the timer : " + e.getLocalizedMessage());
-                }
-            } else {
-                // if there are no candidates, start an election
-                try {
+
+                } else {
+                    // if there are no candidates, start an election
                     fastBullyElectionManagementService
-                            .stopElection(serverState.getServerInfo(), new StdSchedulerFactory().getScheduler());
+                            .stopElection(serverState.getServerInfo());
+
                     fastBullyElectionManagementService.startElection(serverState.getServerInfo(), serverState
                             .getCandidateServerInfoList(), serverState.getElectionAnswerTimeout());
-                } catch (SchedulerException e) {
-                    logger.error("Error while trying to restart an election due to timeout while waiting for " +
-                            "coordinator :" + e.getLocalizedMessage());
+
                 }
+            } catch (NullPointerException ne) {
+                // FIXME expect calling serverState.getTopCandidate() throw null.
+                // look like tempCandidateServerInfoMap.pollFirstEntry() call is null,
+                // trying to access .getValue() on it. cant do much from calling side.
+                // how to fix this? look safe to just log and bypass now
+                // as condition:   if (null != topCandidate)
+                logger.debug(ne.getLocalizedMessage());
             }
         }
     }

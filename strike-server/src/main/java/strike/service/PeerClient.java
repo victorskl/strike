@@ -17,6 +17,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.List;
 
+/**
+ * NOTE: This PeerClient is set to be deprecated or refactored.
+ * Keep logger trace mode here. Use trace, if debugging
+ * comm level issue if any. Usually methods here are quite stable.
+ */
 public class PeerClient {
 
     private final JSONMessageBuilder messageBuilder = JSONMessageBuilder.getInstance();
@@ -41,20 +46,20 @@ public class PeerClient {
             writer.write(message + "\n");
             writer.flush();
 
-            logger.debug("[S2S]Sending  : [" + server.getServerId()
+            logger.trace("[S2S]Sending  : [" + server.getServerId()
                     + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + message);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
             return reader.readLine();
 
         } catch (IOException ioe) {
-            logger.error("Can't Connect: " + server.getServerId() + "@"
+            logger.trace("Can't Connect: " + server.getServerId() + "@"
                     + server.getAddress() + ":" + server.getManagementPort());
         } finally {
             if (socket != null) {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    logger.error("Unable to close the socket : " + e.getLocalizedMessage());
+                    logger.trace("Unable to close the socket : " + e.getLocalizedMessage());
                     try {
                         socket.close();
                     } catch (IOException ignored) {
@@ -90,18 +95,18 @@ public class PeerClient {
             writer.write(message + "\n");
             writer.flush();
 
-            logger.debug("[S2S]Sending  : [" + server.getServerId()
+            logger.trace("[S2S]Sending  : [" + server.getServerId()
                     + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + message);
             writer.close();
         } catch (IOException ioe) {
-            logger.error("Can't Connect: " + server.getServerId() + "@"
+            logger.trace("Can't Connect: " + server.getServerId() + "@"
                     + server.getAddress() + ":" + server.getManagementPort());
         } finally {
             if (socket != null) {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    logger.error("Unable to close the socket : " + e.getLocalizedMessage());
+                    logger.trace("Unable to close the socket : " + e.getLocalizedMessage());
                     try {
                         socket.close();
                     } catch (IOException ignored) {
@@ -131,7 +136,7 @@ public class PeerClient {
             for (String message : messages) {
                 writer.write(message + "\n");
                 writer.flush();
-                logger.debug("[S2S]Sending  : [" + server.getServerId()
+                logger.trace("[S2S]Sending  : [" + server.getServerId()
                         + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + message);
             }
 
@@ -139,14 +144,14 @@ public class PeerClient {
             return reader.readLine();
 
         } catch (IOException ioe) {
-            logger.error("Can't Connect: " + server.getServerId() + "@"
+            logger.trace("Can't Connect: " + server.getServerId() + "@"
                     + server.getAddress() + ":" + server.getManagementPort());
         } finally {
             if (socket != null) {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    logger.error("Unable to close the socket : " + e.getLocalizedMessage());
+                    logger.trace("Unable to close the socket : " + e.getLocalizedMessage());
                     try {
                         socket.close();
                     } catch (IOException ignored) {
@@ -186,11 +191,11 @@ public class PeerClient {
                 try {
                     jj = (JSONObject) parser.parse(resp);
                 } catch (ParseException e) {
-                    logger.error("Unable to parse : " + e.getLocalizedMessage());
+                    logger.trace("Unable to parse : " + e.getLocalizedMessage());
                 }
 
                 if (jj != null) {
-                    logger.debug("[S2S]Receiving: [" + server.getServerId()
+                    logger.trace("[S2S]Receiving: [" + server.getServerId()
                             + "@" + server.getAddress() + ":" + server.getManagementPort() + "] " + jj.toJSONString());
                     // {"identity":"Adel","type":"lockidentity","locked":"false","serverid":"s2"}
                     String status = (String) jj.get(Protocol.locked.toString());
@@ -248,7 +253,7 @@ public class PeerClient {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    logger.error("Unable to close the socket : " + e.getLocalizedMessage());
+                    logger.trace("Unable to close the socket : " + e.getLocalizedMessage());
                     try {
                         socket.close();
                     } catch (IOException ignored) {

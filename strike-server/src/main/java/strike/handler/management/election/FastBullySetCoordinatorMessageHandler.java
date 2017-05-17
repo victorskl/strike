@@ -3,8 +3,6 @@ package strike.handler.management.election;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import strike.common.model.Protocol;
 import strike.common.model.ServerInfo;
 import strike.handler.IProtocolHandler;
@@ -21,12 +19,8 @@ public class FastBullySetCoordinatorMessageHandler extends ManagementHandler imp
     public void handle() {
         // stop its election
         logger.debug("Received coordinator from : " + jsonMessage.get(Protocol.serverid.toString()));
-        try {
-            new FastBullyElectionManagementService().stopElection(serverState.getServerInfo(),
-                    new StdSchedulerFactory().getScheduler());
-        } catch (SchedulerException e) {
-            logger.error("Error while stopping the election : " + e.getLocalizedMessage());
-        }
+
+        new FastBullyElectionManagementService().stopElection(serverState.getServerInfo());
 
         // accept the new coordinator
         String newCoordinatorId = (String) jsonMessage.get(Protocol.serverid.toString());

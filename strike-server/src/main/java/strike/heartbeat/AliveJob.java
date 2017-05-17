@@ -2,10 +2,14 @@ package strike.heartbeat;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.quartz.*;
-import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.Job;
+import org.quartz.JobDataMap;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import strike.common.model.ServerInfo;
-import strike.service.*;
+import strike.service.JSONMessageBuilder;
+import strike.service.PeerClient;
+import strike.service.ServerState;
 import strike.service.election.BullyElectionManagementService;
 import strike.service.election.FastBullyElectionManagementService;
 
@@ -50,23 +54,20 @@ public class AliveJob implements Job {
                             .getCoordinator().getServerId())) {
                         // send the start election message to every server with a higher priority
                         if (serverState.getIsFastBully()) {
-                            try {
-                                new FastBullyElectionManagementService().startElection(serverState.getServerInfo(),
-                                        serverState.getCandidateServerInfoList(), serverState.getElectionAnswerTimeout());
-                            } catch (SchedulerException e) {
-                                logger.error("Unable to start the election : " + e.getLocalizedMessage());
-                            }
+
+                            new FastBullyElectionManagementService().startElection(serverState.getServerInfo(),
+                                    serverState.getCandidateServerInfoList(), serverState.getElectionAnswerTimeout());
+
                         } else {
-                            try {
-                                new BullyElectionManagementService()
-                                        .startElection(serverState.getServerInfo(), serverState.getCandidateServerInfoList(),
-                                                serverState.getElectionAnswerTimeout());
-                                new BullyElectionManagementService().startWaitingForAnswerMessage(serverState.getServerInfo(),
-                                        new StdSchedulerFactory().getScheduler(), serverState.getElectionAnswerTimeout());
-                            } catch (SchedulerException e) {
-                                logger.error("Unable to start the default bully election : "
-                                        + e.getLocalizedMessage());
-                            }
+
+                            new BullyElectionManagementService().startElection(
+                                    serverState.getServerInfo(),
+                                    serverState.getCandidateServerInfoList(),
+                                    serverState.getElectionAnswerTimeout());
+
+                            new BullyElectionManagementService().startWaitingForAnswerMessage(
+                                    serverState.getServerInfo(), serverState.getElectionAnswerTimeout());
+
                         }
                     }
                     peerClient.relayPeers(messageBuilder.notifyServerDownMessage(serverId));

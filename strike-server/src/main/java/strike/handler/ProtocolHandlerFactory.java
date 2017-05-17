@@ -15,7 +15,7 @@ import strike.service.ManagementConnection;
 import strike.service.ServerState;
 
 public class ProtocolHandlerFactory {
-    private final static ServerState serverState = ServerState.getInstance();
+
     /**
      * @deprecated use newClientHandler() or newManagementHandler()
      */
@@ -46,8 +46,8 @@ public class ProtocolHandlerFactory {
         }
 
         // Added 16/20/16 by Ray
-        if (type.equalsIgnoreCase(Protocol.listserver.toString())){
-            return new ListServerProtocolHandler(jsonMessage,connection);
+        if (type.equalsIgnoreCase(Protocol.listserver.toString())) {
+            return new ListServerProtocolHandler(jsonMessage, connection);
         }
 
         // will check authentication inside handler itself
@@ -144,51 +144,50 @@ public class ProtocolHandlerFactory {
             return new NotifyServerDownProtocolHandler(jsonMessage, connection);
         }
 
-        if (type.equalsIgnoreCase(Protocol.startelection.toString())){
-            if (serverState.getIsFastBully()) {
+        if (type.equalsIgnoreCase(Protocol.startelection.toString())) {
+            if (ServerState.getInstance().getIsFastBully()) {
                 return new FastBullyStartElectionMessageHandler(jsonMessage, connection);
             }
             return new StartElectionMessageHandler(jsonMessage, connection);
         }
 
         if (type.equalsIgnoreCase(Protocol.answerelection.toString())) {
-            if (serverState.getIsFastBully()) {
+            if (ServerState.getInstance().getIsFastBully()) {
                 return new FastBullyAnswerElectionMessageHandler(jsonMessage, connection);
             }
             return new AnswerElectionMessageHandler(jsonMessage, connection);
         }
 
-        if (type.equalsIgnoreCase(Protocol.coordinator.toString())){
-            if (serverState.getIsFastBully()) {
+        if (type.equalsIgnoreCase(Protocol.coordinator.toString())) {
+            if (ServerState.getInstance().getIsFastBully()) {
                 return new FastBullySetCoordinatorMessageHandler(jsonMessage, connection);
             }
             return new SetCoordinatorHandler(jsonMessage, connection);
         }
 
-        if (type.equalsIgnoreCase(Protocol.viewelection.toString())){
+        if (type.equalsIgnoreCase(Protocol.viewelection.toString())) {
             return new FastBullyViewMessageHandler(jsonMessage, connection);
         }
 
-        if (type.equalsIgnoreCase(Protocol.nominationelection.toString())){
+        if (type.equalsIgnoreCase(Protocol.nominationelection.toString())) {
             return new FastBullyNominationMessageHandler(jsonMessage, connection);
         }
 
-        if(type.equalsIgnoreCase(Protocol.iamup.toString())){
+        if (type.equalsIgnoreCase(Protocol.iamup.toString())) {
             return new FastBullyIAmUpMessageHandler(jsonMessage, connection);
         }
 
-        if (type.equalsIgnoreCase(Protocol.gossip.toString())){
+        if (type.equalsIgnoreCase(Protocol.gossip.toString())) {
             return new GossipProtocolHandler(jsonMessage, connection);
         }
 
-        if (type.equalsIgnoreCase(Protocol.startvote.toString())){
+        if (type.equalsIgnoreCase(Protocol.startvote.toString())) {
             return new StartVoteMessageHandler(jsonMessage, connection);
         }
 
-        if (type.equalsIgnoreCase(Protocol.answervote.toString())){
+        if (type.equalsIgnoreCase(Protocol.answervote.toString())) {
             return new AnswerVoteMessageHandler(jsonMessage, connection);
         }
-
 
         return new BlackHoleHandler();
     }
