@@ -17,7 +17,7 @@
     <description>Server Module</description>
 
     <properties>
-        <shiro.version>1.4.2</shiro.version>
+        <shiro.version>1.9.1</shiro.version>
         <quartz.version>2.3.2</quartz.version>
     </properties>
 
